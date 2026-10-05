@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-script: "Alex Brush", cursive;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans: "Montserrat", sans-serif;
+}
+
+@layer utilities {
+  .font-script {
+    font-family: var(--font-script);
+  }
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+  
+  /* Delicate hairline stationery borders */
+  .border-hairline {
+    border-width: 1px;
+    border-color: rgba(94, 107, 86, 0.22);
+  }
+  
+  .border-hairline-gold {
+    border-width: 1px;
+    border-color: rgba(184, 151, 90, 0.35);
+  }
+
+  /* Archival paper texture feel */
+  .paper-surface {
+    background-color: #FAF7F2;
+    background-image: radial-gradient(rgba(140, 130, 115, 0.05) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+
+  .paper-surface-warm {
+    background-color: #F6F1EA;
+    background-image: radial-gradient(rgba(120, 110, 95, 0.06) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+}
+
+/* Custom smooth scroll and subtle typography styling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Print styling for couples wanting physical keepsake export */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
