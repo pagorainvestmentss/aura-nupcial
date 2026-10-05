@@ -17,7 +17,7 @@ export const ClientMeuConvitePage: React.FC = () => {
   const firstGuest = guests[0];
   const inviteUrl =
     event && firstGuest
-      ? `${window.location.origin}/convite/${event.slug}/${firstGuest.token}`
+      ? `${window.location.origin}${import.meta.env.BASE_URL}convite/${event.slug}/${firstGuest.token}`
       : '';
 
   const copyLink = () => {

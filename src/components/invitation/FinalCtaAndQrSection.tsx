@@ -22,7 +22,7 @@ export const FinalCtaAndQrSection: React.FC<FinalCtaAndQrSectionProps> = ({
   useEffect(() => {
     if (guest?.token) {
       // Encode individual invitation URL or check-in payload into the QR Code
-      const verificationUrl = `${window.location.origin}/convite/${event.slug}/${guest.token}`;
+      const verificationUrl = `${window.location.origin}${import.meta.env.BASE_URL}convite/${event.slug}/${guest.token}`;
       QRCode.toDataURL(verificationUrl, {
         width: 220,
         margin: 1,

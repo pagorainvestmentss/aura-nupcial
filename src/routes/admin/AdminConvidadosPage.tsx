@@ -29,7 +29,7 @@ export const AdminConvidadosPage: React.FC = () => {
   const inviteUrl = (guestToken: string) => {
     const ev = events.find((e) => guests.some((g) => g.eventId === e.id && g.token === guestToken));
     if (!ev) return '';
-    return `${window.location.origin}/convite/${ev.slug}/${guestToken}`;
+    return `${window.location.origin}${import.meta.env.BASE_URL}convite/${ev.slug}/${guestToken}`;
   };
 
   const copyLink = (token: string) => {

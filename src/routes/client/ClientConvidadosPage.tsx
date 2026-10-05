@@ -36,7 +36,7 @@ export const ClientConvidadosPage: React.FC = () => {
   );
 
   const inviteUrl = (token: string) =>
-    event ? `${window.location.origin}/convite/${event.slug}/${token}` : '';
+    event ? `${window.location.origin}${import.meta.env.BASE_URL}convite/${event.slug}/${token}` : '';
 
   const copyLink = (token: string) => {
     navigator.clipboard?.writeText(inviteUrl(token));

@@ -50,7 +50,15 @@ import { InvitationPage } from '../routes/invitation/InvitationPage';
  * As permissões reais serão forçadas no backend (Supabase RLS);
  * estes guards são apenas o espelho frontend.
  */
-export const router = createBrowserRouter([
+// Em hosts com subcaminho (ex.: GitHub Pages /aura-nupcial/) o React Router
+// precisa do basename para fazer match das rotas sem o prefixo.
+const basename =
+  import.meta.env.BASE_URL === '/'
+    ? undefined
+    : import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+export const router = createBrowserRouter(
+  [
   {
     element: <PublicLayout />,
     children: [
