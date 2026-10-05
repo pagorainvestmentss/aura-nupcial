@@ -116,4 +116,4 @@ export const router = createBrowserRouter(
     element: <InvitationLayout />,
     children: [{ index: true, element: <InvitationPage /> }]
   }
-]);
+], { basename });
