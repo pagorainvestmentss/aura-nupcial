@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
 import { Reveal } from '../../components/motion/Reveal';
+import { EASE_OUT, staggerChild } from '../../components/motion/variants';
 
 const PLANS = [
   {
@@ -51,18 +53,33 @@ export const PacotesPage: React.FC = () => {
         </p>
       </div>
 
-      <Reveal className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+      <Reveal stagger className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
         {PLANS.map((p) => (
-          <div
+          <motion.div
             key={p.name}
-            className={`relative bg-white border rounded-xs p-7 flex flex-col ${
+            variants={staggerChild}
+            whileHover={{ y: -4 }}
+            whileTap={{ y: 0, transition: { duration: 0.18, ease: EASE_OUT } }}
+            className={`relative bg-white border rounded-xs p-7 flex flex-col h-full ${
               p.highlight ? 'border-[#5E6B56] shadow-lg' : 'border-stone-200 shadow-xs'
             }`}
           >
             {p.highlight && (
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] px-3 py-1 rounded-full">
+              <motion.span
+                variants={{
+                  hidden: { opacity: 0, scale: 0.8, y: -4, x: '-50%' },
+                  visible: {
+                    opacity: 1,
+                    scale: 1,
+                    y: 0,
+                    x: '-50%',
+                    transition: { type: 'spring', stiffness: 320, damping: 20, delay: 0.2 }
+                  }
+                }}
+                className="absolute -top-3 left-1/2 text-[10px] uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] px-3 py-1 rounded-full"
+              >
                 Mais escolhido
-              </span>
+              </motion.span>
             )}
             <h2 className="font-serif text-2xl text-stone-900">{p.name}</h2>
             <div className="mt-3 flex items-end gap-1.5">
@@ -84,7 +101,7 @@ export const PacotesPage: React.FC = () => {
 
             <Link
               to={`/criar?plano=${p.name.toLowerCase()}`}
-              className={`mt-7 inline-flex items-center justify-center px-5 py-3 text-xs uppercase tracking-[0.2em] font-semibold rounded-xs transition-colors ${
+              className={`press mt-7 inline-flex items-center justify-center px-5 py-3 text-xs uppercase tracking-[0.2em] font-semibold rounded-xs transition-colors ${
                 p.highlight
                   ? 'text-white bg-[#5E6B56] hover:bg-[#4E5B46]'
                   : 'text-stone-800 bg-white border border-stone-300 hover:bg-stone-50'
@@ -92,7 +109,7 @@ export const PacotesPage: React.FC = () => {
             >
               Escolher {p.name}
             </Link>
-          </div>
+          </motion.div>
         ))}
       </Reveal>
 

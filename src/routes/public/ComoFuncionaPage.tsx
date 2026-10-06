@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Reveal } from '../../components/motion/Reveal';
+import { motion } from 'motion/react';
+import { Reveal, RevealItem } from '../../components/motion/Reveal';
+import { slideChild } from '../../components/motion/variants';
 
 const STEPS = [
   {
@@ -49,46 +51,49 @@ export const ComoFuncionaPage: React.FC = () => {
         </p>
       </div>
 
-      <Reveal className="space-y-5">
+      <Reveal stagger className="space-y-5">
         {STEPS.map((s) => (
-          <div
-            key={s.n}
-            className="grid sm:grid-cols-[80px_1fr] gap-4 bg-white border border-stone-200 p-6 rounded-xs"
-          >
-            <span className="font-serif text-4xl text-[#D8DFD5] leading-none">{s.n}</span>
-            <div>
-              <h2 className="font-serif text-xl text-stone-900">{s.title}</h2>
-              <p className="text-sm text-stone-600 leading-relaxed mt-1.5 font-sans">{s.text}</p>
+          <RevealItem key={s.n}>
+            <div className="grid sm:grid-cols-[80px_1fr] gap-4 bg-white border border-stone-200 p-6 rounded-xs">
+              <motion.span variants={slideChild} className="font-serif text-4xl text-[#D8DFD5] leading-none">
+                {s.n}
+              </motion.span>
+              <div>
+                <h2 className="font-serif text-xl text-stone-900">{s.title}</h2>
+                <p className="text-sm text-stone-600 leading-relaxed mt-1.5 font-sans">{s.text}</p>
+              </div>
             </div>
-          </div>
+          </RevealItem>
         ))}
       </Reveal>
 
-      <div className="mt-12 text-center bg-[#F4EFE6] border border-stone-200 p-8 rounded-xs">
-        <h3 className="font-serif text-2xl text-stone-900">
-          Quer ver um convite a funcionar?
-        </h3>
-        <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <Link
-            to="/criar"
-            className="px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors"
-          >
-            Criar convite
-          </Link>
-          <Link
-            to="/convite/mariana-pedro/8Fk92KsP"
-            className="px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-stone-800 bg-white border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors"
-          >
-            Abrir convite de demonstração
-          </Link>
-          <Link
-            to="/pacotes"
-            className="px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-stone-800 bg-white border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors"
-          >
-            Ver pacotes
-          </Link>
+      <Reveal>
+        <div className="mt-12 text-center bg-[#F4EFE6] border border-stone-200 p-8 rounded-xs">
+          <h3 className="font-serif text-2xl text-stone-900">
+            Quer ver um convite a funcionar?
+          </h3>
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <Link
+              to="/criar"
+              className="press px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors"
+            >
+              Criar convite
+            </Link>
+            <Link
+              to="/convite/mariana-pedro/8Fk92KsP"
+              className="press px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-stone-800 bg-white border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors"
+            >
+              Abrir convite de demonstração
+            </Link>
+            <Link
+              to="/pacotes"
+              className="press px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-stone-800 bg-white border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors"
+            >
+              Ver pacotes
+            </Link>
+          </div>
         </div>
-      </div>
+      </Reveal>
     </div>
   );
 };

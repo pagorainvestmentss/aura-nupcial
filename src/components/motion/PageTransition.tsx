@@ -57,7 +57,10 @@ export const PageTransition: React.FC<PageTransitionProps> = ({ children, fallba
 
   return (
     <>
-      <AnimatePresence mode="wait" initial={false}>
+      {/* Sem `initial={false}`: esse prop faz o contexto de presença suprimir
+          TODAS as animações de entrada da primeira carga da SPA (hero,
+          cartões, etc.) — ver Issue #13. */}
+      <AnimatePresence mode="wait">
         <motion.div
           key={location.pathname}
           className="h-full"

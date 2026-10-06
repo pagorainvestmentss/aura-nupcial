@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import { OCCASION_LIST } from '../data/occasions';
 import { WHATSAPP_DISPLAY, whatsappLink } from '../data/site';
-import { menuVariants } from '../components/motion/variants';
+import { EASE_OUT, menuVariants } from '../components/motion/variants';
 
 const NAV_LINKS = [
   { to: '/como-funciona', label: 'Como funciona' },
@@ -49,12 +49,23 @@ export const PublicLayout: React.FC = () => {
                 key={l.to}
                 to={l.to}
                 className={({ isActive }) =>
-                  `transition-colors ${
-                    isActive ? 'text-[#5E6B56] border-b border-[#5E6B56]' : 'text-stone-500 hover:text-stone-900 border-b border-transparent'
-                  } pb-0.5`
+                  `relative pb-0.5 transition-colors ${
+                    isActive ? 'text-[#5E6B56]' : 'text-stone-500 hover:text-stone-900'
+                  }`
                 }
               >
-                {l.label}
+                {({ isActive }) => (
+                  <>
+                    {l.label}
+                    {isActive && (
+                      <motion.span
+                        layoutId="nav-underline"
+                        className="absolute inset-x-0 bottom-0 h-px bg-[#5E6B56]"
+                        transition={{ duration: 0.3, ease: EASE_OUT }}
+                      />
+                    )}
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>
@@ -71,13 +82,13 @@ export const PublicLayout: React.FC = () => {
               <>
                 <Link
                   to="/criar"
-                  className="hidden sm:inline-flex px-4 py-2 text-[11px] uppercase tracking-widest font-sans font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors"
+                  className="press hidden sm:inline-flex px-4 py-2 text-[11px] uppercase tracking-widest font-sans font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors"
                 >
                   Criar convite
                 </Link>
                 <Link
                   to="/login"
-                  className="hidden sm:inline-flex px-4 py-2 text-[11px] uppercase tracking-widest font-sans font-semibold text-stone-800 bg-white border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors"
+                  className="press hidden sm:inline-flex px-4 py-2 text-[11px] uppercase tracking-widest font-sans font-semibold text-stone-800 bg-white border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors"
                 >
                   Entrar
                 </Link>
@@ -139,8 +150,12 @@ export const PublicLayout: React.FC = () => {
         target="_blank"
         rel="noreferrer"
         aria-label="Falar por WhatsApp"
-        className="fixed bottom-5 right-5 z-40 w-13 h-13 sm:w-14 sm:h-14 flex items-center justify-center rounded-full bg-[#5E6B56] text-white shadow-xl hover:bg-[#4E5B46] transition-colors"
+        className="press group fixed bottom-5 right-5 z-40 w-13 h-13 sm:w-14 sm:h-14 flex items-center justify-center rounded-full bg-[#5E6B56] text-white shadow-xl hover:bg-[#4E5B46] transition-colors"
       >
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 rounded-full border border-white/50 ping-soft pointer-events-none"
+        />
         <MessageCircle className="w-6 h-6" />
       </a>
 

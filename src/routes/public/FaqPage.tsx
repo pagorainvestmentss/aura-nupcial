@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { Reveal } from '../../components/motion/Reveal';
+import { Reveal, RevealItem } from '../../components/motion/Reveal';
+import { DURATION, EASE_OUT } from '../../components/motion/variants';
 
 const FAQS = [
   {
@@ -54,36 +55,52 @@ export const FaqPage: React.FC = () => {
         <h1 className="font-serif text-4xl text-stone-900">Perguntas frequentes</h1>
       </div>
 
-      <Reveal className="space-y-3">
+      <Reveal stagger staggerGap={0.05} className="space-y-3">
         {FAQS.map((f, i) => (
-          <div key={f.q} className="bg-white border border-stone-200 rounded-xs">
-            <button
-              onClick={() => setOpen(open === i ? null : i)}
-              className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 cursor-pointer"
-              aria-expanded={open === i}
-            >
-              <span className="font-serif text-lg text-stone-900">{f.q}</span>
-              <span className="text-[#5E6B56] text-xl leading-none shrink-0">
-                {open === i ? '−' : '+'}
-              </span>
-            </button>
-            <AnimatePresence initial={false}>
-              {open === i && (
-                <motion.div
-                  key="resposta"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                  className="overflow-hidden"
+          <RevealItem key={f.q}>
+            <div className="bg-white border border-stone-200 rounded-xs">
+              <button
+                onClick={() => setOpen(open === i ? null : i)}
+                className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 cursor-pointer"
+                aria-expanded={open === i}
+              >
+                <span className="font-serif text-lg text-stone-900">{f.q}</span>
+                <span
+                  className="relative w-5 h-5 flex items-center justify-center shrink-0"
+                  aria-hidden="true"
                 >
-                  <p className="px-5 pb-5 text-sm text-stone-600 leading-relaxed font-sans">
-                    {f.a}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                  <AnimatePresence initial={false}>
+                    <motion.span
+                      key={open === i ? 'aberto' : 'fechado'}
+                      initial={{ opacity: 0, scale: 0.5, rotate: open === i ? -90 : 90 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      exit={{ opacity: 0, scale: 0.5, rotate: open === i ? 90 : -90 }}
+                      transition={{ duration: DURATION.fast, ease: EASE_OUT }}
+                      className="absolute text-[#5E6B56] text-xl leading-none"
+                    >
+                      {open === i ? '\u2212' : '+'}
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
+              </button>
+              <AnimatePresence initial={false}>
+                {open === i && (
+                  <motion.div
+                    key="resposta"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <p className="px-5 pb-5 text-sm text-stone-600 leading-relaxed font-sans">
+                      {f.a}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </RevealItem>
         ))}
       </Reveal>
 
@@ -93,7 +110,7 @@ export const FaqPage: React.FC = () => {
         </p>
         <Link
           to="/contacto"
-          className="inline-block mt-3 px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors"
+          className="press inline-block mt-3 px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors"
         >
           Falar connosco
         </Link>

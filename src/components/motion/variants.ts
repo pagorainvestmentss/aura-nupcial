@@ -81,6 +81,47 @@ export const staggerChild: Variants = {
   }
 };
 
+/**
+ * Entrada coreografada do hero — o pai revela os filhos em sequência
+ * no momento do load (sem esperar por scroll).
+ */
+export const heroParent: Variants = {
+  hidden: {},
+  visible: { transition: { delayChildren: 0.06, staggerChildren: 0.07 } }
+};
+
+/** Cada bloco do hero (eyebrow, título, parágrafo, CTAs, imagem). */
+export const heroChild: Variants = {
+  hidden: { opacity: 0, y: 18, filter: 'blur(6px)' },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: { duration: 0.55, ease: EASE_OUT }
+  }
+};
+
+/** Palavra dentro de uma citação revelada palavra a palavra. */
+export const quoteWord: Variants = {
+  hidden: { opacity: 0, y: 8, filter: 'blur(3px)' },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: { duration: 0.4, ease: EASE_OUT }
+  }
+};
+
+/** Número ou detalhe que entra de lado (passos 01–06). */
+export const slideChild: Variants = {
+  hidden: { opacity: 0, x: -8 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: EASE_OUT, delay: 0.1 }
+  }
+};
+
 /** Painel, modal ou gaveta: entra por cima, sai sem competir pela atenção. */
 export const overlayVariants: Variants = {
   hidden: { opacity: 0, y: 10, scale: 0.98, filter: 'blur(4px)' },

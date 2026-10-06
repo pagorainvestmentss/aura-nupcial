@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, type Variants } from 'motion/react';
 import { staggerChild, staggerParent } from './variants';
 
 interface RevealProps {
@@ -9,6 +9,8 @@ interface RevealProps {
   delay?: number;
   /** Anima os filhos em sequência (para grelhas e listas). */
   stagger?: boolean;
+  /** Ritmo do stagger em segundos (por omissão 0.06). */
+  staggerGap?: number;
 }
 
 /**
@@ -18,7 +20,7 @@ interface RevealProps {
  * em páginas carregadas com `React.lazy` o `whileInView` não aplica os
  * estilos iniciais e a entrada nunca chega a jogar.
  */
-function useVezNoEcra(ref: React.RefObject<HTMLElement | null>): boolean {
+export function useVezNoEcra(ref: React.RefObject<HTMLElement | null>): boolean {
   const [visivel, setVisivel] = useState(false);
 
   useEffect(() => {
@@ -52,17 +54,25 @@ export const Reveal: React.FC<RevealProps> = ({
   children,
   className,
   delay = 0,
-  stagger = false
+  stagger = false,
+  staggerGap = 0.06
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const visivel = useVezNoEcra(ref);
 
   if (stagger) {
+    const parentVariants: Variants =
+      staggerGap === 0.06
+        ? staggerParent
+        : {
+            hidden: {},
+            visible: { transition: { delayChildren: 0.05, staggerChildren: staggerGap } }
+          };
     return (
       <motion.div
         ref={ref}
         className={className}
-        variants={staggerParent}
+        variants={parentVariants}
         initial="hidden"
         animate={visivel ? 'visible' : 'hidden'}
       >
