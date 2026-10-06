@@ -21,6 +21,7 @@
 
 ```bash
 npm run lint     # tsc --noEmit — obrigatório
+npm test         # Vitest — obrigatório se mexeu em lógica
 npm run build    # deve passar sem erros
 ```
 
@@ -34,7 +35,7 @@ npm run build    # deve passar sem erros
 - Stack: Vite 8 + React 19 + TypeScript + Tailwind 4 + `react-router-dom`.
 - Alias `@` → raiz do projecto.
 - Os 4 ambientes (público, admin, cliente, convidado) **nunca se misturam** — ver `docs/ARQUITECTURA.md`, secção 1.
-- Persistência actual: `localStorage` (Fase 1). A camada de dados está isolada em `src/services/weddingStorage.ts` — a Fase 2 (Supabase) troca essa camada **sem mudar as páginas**.
+- Persistência actual: `localStorage` (Fase 1). A camada de dados está isolada em `src/services/weddingStorage.ts` — a Fase 2 (Supabase) troca essa camada; atenção: as assinaturas actuais são **síncronas** e o Supabase é **async** (decisão registada em `docs/ARQUITECTURA.md` §9.6).
 - Palavras técnicas (token, API, endpoint) **nunca** aparecem na UI do cliente ou do convidado.
 
 ## Referências rápidas
@@ -45,4 +46,4 @@ npm run build    # deve passar sem erros
 | Arquitectura, rotas, dados, segurança | `docs/ARQUITECTURA.md` |
 | Visão de produto (não técnica) | `docs/COMO-FUNCIONA.md` |
 | O que está pendente | Issues abertas + `docs/ARQUITECTURA.md` secção 11 |
-| Comandos | `npm run dev` · `npm run lint` · `npm run build` |
+| Comandos | `npm run dev` · `npm run lint` · `npm test` · `npm run build` |

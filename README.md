@@ -22,6 +22,7 @@ Plataforma de **convites digitais para grandes ocasiões** (casamento, noivado, 
 npm install      # dependências
 npm run dev      # servidor de desenvolvimento em http://localhost:3000
 npm run lint     # verificação de tipos — OBRIGATÓRIO após cada alteração
+npm test         # testes automatizados (Vitest) — 59 testes
 npm run build    # build de produção (gera dist/ e 404.html)
 ```
 
@@ -74,6 +75,7 @@ git push -u origin issue/<n>-<slug>
 
 - [ ] Issue correspondente existe e está linkada (`Closes #n`)
 - [ ] `npm run lint` passa
+- [ ] `npm test` passa (também corre sozinho no CI de cada PR)
 - [ ] `npm run build` passa
 - [ ] Teste manual do que mudou (dev server)
 - [ ] Sem secrets, chaves ou `.env` no diff

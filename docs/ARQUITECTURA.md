@@ -41,6 +41,7 @@ Plataforma de convites de casamento digitais com **quatro ambientes estritamente
 ```bash
 npm run dev      # vite --port=3000 (HMR desactivado via env DISABLE_HMR — não alterar)
 npm run lint     # tsc --noEmit  ← obrigatório após cada alteração
+npm test         # Vitest (jsdom) — 59 testes; também corre no CI de cada PR
 npm run build    # produção
 ```
 
@@ -413,9 +414,22 @@ Upload restringido por RLS ao casal dono do evento.
 1. Criar projecto + tabelas + `profiles` (trigger em `auth.users`).
 2. Activar RLS em **todas** as tabelas antes de qualquer dado real.
 3. `SupabaseAuth` a substituir `AuthContext` (mesma interface pública `login/logout/session`).
-4. `weddingStorage.ts` → camada `supabaseRepository` com a **mesma assinatura dos métodos actuais** (as páginas não mudam).
+4. `weddingStorage.ts` → camada `supabaseRepository` (ver decisão sync/async abaixo).
 5. Migrar seed demo → fixtures SQL.
 6. Testar a cadeia inteira: admin → cliente → convidado → RSVP → check-in.
+
+> **⚠ Decisão pendente antes de implementar: sync vs async.**
+> As assinaturas actuais de `weddingStorage.ts` são **síncronas** (`getEvents(): WeddingEvent[]`);
+> o Supabase é **async**. Duas opções:
+>
+> 1. **Repositório assíncrono + React Query** *(recomendado)* — cache, invalidação e estados
+>    de loading resolvidos de graça; prepara Supabase Realtime. Exige migrar as ~66 chamadas
+>    actuais para `async` (as páginas passam a ter loading/error — os skeletons já existem).
+> 2. Manter assinaturas síncronas com cache local hidratado no arranque — menos mudanças,
+>    mas dados potencialmente desactualizados e writes que mesmo assim teriam de ser async.
+>
+> Os testes automatizados (Issue #5 — 59 testes, `npm test`) são a rede de segurança desta migração.
+> Registado na Issue #16.
 
 ---
 
@@ -445,7 +459,8 @@ Upload restringido por RLS ao casal dono do evento.
 | 5.4 | **Fotos** — upload pelo cliente (hero + galeria com legendas, limite por plano, fallback do arco sem foto) + substituição dos assets de casal branco (landing/convites) por fotos de casal negro com migração de URLs antigos | ✅ lint + build + Playwright 3010 |
 | 5.5 | **RSVP completo** — contagem decrescente para o prazo, acompanhantes nomeados (cada nome = 1 lugar, cap `maxGuests`) e grupo Noiva/Noivo (opções por ocasião, vazio esconde o campo); gravado em `companions`/`group` do convidado e visível nas listas admin/cliente + CSV | ✅ lint + build + Playwright 3010 |
 | 6 | Fase 2 de design — PDFs de referência (pasta fornecida pelo utilizador) | ⏳ por receber |
-| 7 | Supabase: schema + RLS + auth + RPCs (secção 9) | ⏳ Fase 2 |
-| 8 | Testes automatizados (unit + fluxo RSVP/check-in) | ⏳ |
-| 9 | Code-splitting (bundle actual ~592 kB) | ⏳ opcional |
+| 7 | Supabase: schema + RLS + auth + RPCs (secção 9) | ⏳ Fase 2 (adiada — ver decisão sync/async §9.6) |
+| 8 | Testes automatizados (unit + fluxo RSVP/check-in) | ✅ Vitest + CI em cada PR (Issue #5 · PR #15 · 59 testes) |
+| 9 | Code-splitting (bundle actual ~592 kB) | ✅ rotas em `React.lazy` + chunk por página (~345 kB) |
 | 10 | Nota menor: dashboard admin duplica nome do evento/cliente na tabela de eventos | ⏳ cosmético |
+| 11 | Limpeza de deps sem uso + lock file único + docs actualizadas | ✅ Issue #16 |
