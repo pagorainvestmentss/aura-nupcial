@@ -1,0 +1,39 @@
+name: Nova função
+description: Funcionalidade que ainda não existe
+title: "[Nova função] "
+labels: ["nova-funcao"]
+body:
+  - type: textarea
+    id: porque
+    attributes:
+      label: Porquê? Que problema resolve?
+      description: Quem precisa disto e o que ganha com isso.
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: O que queremos
+      description: Comportamento pretendido, em linguagem simples.
+    validations:
+      required: true
+  - type: dropdown
+    id: ambiente
+    attributes:
+      label: Ambiente afectado
+      options:
+        - Site público
+        - Admin
+        - Cliente (casal)
+        - Convidado (convite)
+        - Vários
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceite
+      description: Lista do que tem de estar verdadeiro para a Issue poder fechar.
+      placeholder: "- `npm run lint` e `npm run build` passam\n- Fluxo testado de ponta a ponta"
+    validations:
+      required: true

@@ -1,0 +1,37 @@
+name: Correcção
+description: Algo está errado ou partido — reportar e encaminhar para correcção
+title: "[Correcção] "
+labels: ["correcao"]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: O que está errado?
+      description: Comportamento esperado vs comportamento actual.
+      placeholder: "Ao abrir o convite de um convidado, a galeria não carrega…"
+    validations:
+      required: true
+  - type: textarea
+    id: passos
+    attributes:
+      label: Passos para reproduzir
+      placeholder: |
+        1. Abrir …
+        2. Clicar em …
+    validations:
+      required: false
+  - type: textarea
+    id: onde
+    attributes:
+      label: Onde (ficheiro, página ou rota)
+      placeholder: "src/routes/invitation/InvitationPage.tsx · /convite/:slug/:token"
+    validations:
+      required: false
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceite
+      description: Como se sabe que ficou corrigido.
+      placeholder: "- O erro já não acontece\n- `npm run lint` passa"
+    validations:
+      required: true

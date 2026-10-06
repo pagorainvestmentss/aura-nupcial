@@ -1,0 +1,33 @@
+name: Melhoria
+description: Melhorar algo que já existe (qualidade, desempenho, experiência)
+title: "[Melhoria] "
+labels: ["melhoria"]
+body:
+  - type: textarea
+    id: actual
+    attributes:
+      label: Como está hoje?
+      description: O que limita ou deixa a desegar na situação actual.
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Como deve ficar?
+      description: A melhor versão possível desta coisa já existente.
+    validations:
+      required: true
+  - type: input
+    id: onde
+    attributes:
+      label: Onde (ficheiro, página ou rota)
+      placeholder: "src/routes/admin/AdminEventosPage.tsx"
+    validations:
+      required: false
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceite
+      placeholder: "- `npm run lint` e `npm run build` passam\n- Testado em …"
+    validations:
+      required: true
