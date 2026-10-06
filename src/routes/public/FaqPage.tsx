@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
+import { Reveal } from '../../components/motion/Reveal';
 
 const FAQS = [
   {
@@ -52,26 +54,38 @@ export const FaqPage: React.FC = () => {
         <h1 className="font-serif text-4xl text-stone-900">Perguntas frequentes</h1>
       </div>
 
-      <div className="space-y-3">
+      <Reveal className="space-y-3">
         {FAQS.map((f, i) => (
           <div key={f.q} className="bg-white border border-stone-200 rounded-xs">
             <button
               onClick={() => setOpen(open === i ? null : i)}
               className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 cursor-pointer"
+              aria-expanded={open === i}
             >
               <span className="font-serif text-lg text-stone-900">{f.q}</span>
               <span className="text-[#5E6B56] text-xl leading-none shrink-0">
                 {open === i ? '−' : '+'}
               </span>
             </button>
-            {open === i && (
-              <p className="px-5 pb-5 text-sm text-stone-600 leading-relaxed font-sans">
-                {f.a}
-              </p>
-            )}
+            <AnimatePresence initial={false}>
+              {open === i && (
+                <motion.div
+                  key="resposta"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <p className="px-5 pb-5 text-sm text-stone-600 leading-relaxed font-sans">
+                    {f.a}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         ))}
-      </div>
+      </Reveal>
 
       <div className="text-center mt-10">
         <p className="text-sm text-stone-600 font-sans">

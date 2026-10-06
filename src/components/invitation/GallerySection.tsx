@@ -3,6 +3,7 @@ import { WeddingEvent, ColorPalette, GalleryPhoto } from '../../types/wedding';
 import { BotanicalDivider } from '../common/BotanicalFlourish';
 import { X, ZoomIn } from 'lucide-react';
 import { isCoupleOccasion } from '../../data/occasions';
+import { SmartImage } from '../motion/SmartImage';
 
 interface GallerySectionProps {
   event: WeddingEvent;
@@ -62,7 +63,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({
               }}
             >
               <div className="relative aspect-[3/4] overflow-hidden">
-                <img
+                <SmartImage
                   src={event.gallery[0].url}
                   alt={event.gallery[0].caption || 'Foto do casal'}
                   referrerPolicy="no-referrer"
@@ -99,7 +100,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({
                 }}
               >
                 <div className="relative aspect-[4/3] overflow-hidden">
-                  <img
+                  <SmartImage
                     src={photo.url}
                     alt={photo.caption || 'Foto do casal'}
                     referrerPolicy="no-referrer"
@@ -142,7 +143,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({
             >
               <X className="w-5 h-5" />
             </button>
-            <img
+            <SmartImage
               src={selectedPhoto.url}
               alt={selectedPhoto.caption || 'Foto ampliada'}
               referrerPolicy="no-referrer"

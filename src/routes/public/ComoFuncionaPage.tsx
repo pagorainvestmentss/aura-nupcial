@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Reveal } from '../../components/motion/Reveal';
 
 const STEPS = [
   {
@@ -48,7 +49,7 @@ export const ComoFuncionaPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="space-y-5">
+      <Reveal className="space-y-5">
         {STEPS.map((s) => (
           <div
             key={s.n}
@@ -61,7 +62,7 @@ export const ComoFuncionaPage: React.FC = () => {
             </div>
           </div>
         ))}
-      </div>
+      </Reveal>
 
       <div className="mt-12 text-center bg-[#F4EFE6] border border-stone-200 p-8 rounded-xs">
         <h3 className="font-serif text-2xl text-stone-900">

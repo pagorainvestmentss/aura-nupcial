@@ -4,6 +4,7 @@ import { WeddingStorageService } from '../../services/weddingStorage';
 import { BotanicalCorner, BotanicalDivider } from '../common/BotanicalFlourish';
 import { Check, X, Users, Utensils, HeartHandshake, UserPlus } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { AnimatePresence, motion } from 'motion/react';
 import { getOccasion, eventNames } from '../../data/occasions';
 
 interface RsvpSectionProps {
@@ -184,15 +185,21 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
 
         <BotanicalDivider color={palette.accent} className="mb-10" />
 
-        {submitted ? (
-          /* Confirmation Success Card */
-          <div
-            className="p-8 rounded-xs transition-all duration-500 animate-fadeIn"
-            style={{
-              backgroundColor: palette.paperWarm,
-              border: `1px solid ${palette.hairline}`
-            }}
-          >
+        <AnimatePresence mode="wait" initial={false}>
+          {submitted ? (
+            /* Confirmation Success Card */
+            <motion.div
+              key="resposta-confirmada"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="p-8 rounded-xs"
+              style={{
+                backgroundColor: palette.paperWarm,
+                border: `1px solid ${palette.hairline}`
+              }}
+            >
             <div
               className="w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-4"
               style={{
@@ -247,16 +254,21 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
             >
               Alterar minha resposta
             </button>
-          </div>
-        ) : (
-          /* Interactive RSVP Form */
-          <div
-            className="p-6 sm:p-8 rounded-xs text-left"
-            style={{
-              backgroundColor: palette.paperWarm,
-              border: `1px solid ${palette.hairline}`
-            }}
-          >
+            </motion.div>
+          ) : (
+            /* Interactive RSVP Form */
+            <motion.div
+              key="form-rsvp"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="p-6 sm:p-8 rounded-xs text-left"
+              style={{
+                backgroundColor: palette.paperWarm,
+                border: `1px solid ${palette.hairline}`
+              }}
+            >
             {guest && (
               <div className="pb-4 mb-6 border-b" style={{ borderColor: palette.hairline }}>
                 <p className="text-[11px] uppercase tracking-wider font-sans font-medium" style={{ color: palette.goldAccent }}>
@@ -424,9 +436,10 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
                   style={{ borderColor: palette.hairline }}
                 />
               </div>
-            </div>
-          </div>
-        )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );

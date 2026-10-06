@@ -1,11 +1,12 @@
 import React from 'react';
-import { Save, Heart, Info, Image as ImageIcon, Plus, X } from 'lucide-react';
+import { Save, Heart, Info, Image as ImageIcon, Plus, X, Loader2 } from 'lucide-react';
 import { WeddingStorageService } from '../../services/weddingStorage';
 import { WeddingEvent } from '../../types/wedding';
 import { useClientEvent } from './useClientEvent';
 import { getOccasion } from '../../data/occasions';
 import { PLAN_GALLERY_LIMIT } from '../../data/site';
 import { ACCEPTED_IMAGE_ATTR, processImage } from '../../utils/imageUpload';
+import { SmartImage } from '../../components/motion/SmartImage';
 
 const MONTHS_PT = [
   'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
@@ -41,6 +42,7 @@ export const ClientDadosPage: React.FC = () => {
   const [form, setForm] = React.useState<WeddingEvent | null>(event);
   const [saved, setSaved] = React.useState(false);
   const [photoError, setPhotoError] = React.useState<string | null>(null);
+const [isProcessing, setIsProcessing] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
   const monoTouched = React.useRef(false);
 
@@ -96,8 +98,13 @@ export const ClientDadosPage: React.FC = () => {
     e.target.value = ''; // permite escolher o mesmo ficheiro outra vez
     if (!file) return;
     setPhotoError(null);
-    const url = await readFileAsPhoto(file);
-    if (url) patch({ heroPhoto: url });
+    setIsProcessing(true);
+    try {
+      const url = await readFileAsPhoto(file);
+      if (url) patch({ heroPhoto: url });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleGalleryFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,24 +112,29 @@ export const ClientDadosPage: React.FC = () => {
     e.target.value = '';
     if (files.length === 0) return;
     setPhotoError(null);
+    setIsProcessing(true);
 
-    const room = galleryLimit - form.gallery.length;
-    const next = [...form.gallery];
-    for (const file of files.slice(0, room)) {
-      const url = await readFileAsPhoto(file);
-      if (url) {
-        next.push({
-          id: `photo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
-          url
-        });
+    try {
+      const room = galleryLimit - form.gallery.length;
+      const next = [...form.gallery];
+      for (const file of files.slice(0, room)) {
+        const url = await readFileAsPhoto(file);
+        if (url) {
+          next.push({
+            id: `photo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+            url
+          });
+        }
       }
+      if (files.length > room) {
+        setPhotoError(
+          `O seu plano permite atǸ ${galleryLimit} fotos de galeria �?" remova algumas para acrescentar outras.`
+        );
+      }
+      patch({ gallery: next });
+    } finally {
+      setIsProcessing(false);
     }
-    if (files.length > room) {
-      setPhotoError(
-        `O seu plano permite até ${galleryLimit} fotos de galeria — remova algumas para acrescentar outras.`
-      );
-    }
-    patch({ gallery: next });
   };
 
   const removeGalleryPhoto = (id: string) =>
@@ -406,7 +418,7 @@ export const ClientDadosPage: React.FC = () => {
             <label className={labelCls}>Foto principal (capa do convite)</label>
             <div className="flex items-start gap-4">
               {form.heroPhoto ? (
-                <img
+                <SmartImage
                   src={form.heroPhoto}
                   alt="Foto principal"
                   className="w-24 h-32 sm:w-28 sm:h-36 object-cover rounded-xs border border-stone-200"
@@ -417,7 +429,11 @@ export const ClientDadosPage: React.FC = () => {
                 </div>
               )}
               <div className="space-y-2">
-                <label className="inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-[0.2em] font-semibold text-stone-700 border border-stone-300 hover:border-[#5E6B56] rounded-xs cursor-pointer transition-colors">
+                <label
+                  className={`inline-flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-[0.2em] font-semibold text-stone-700 border border-stone-300 hover:border-[#5E6B56] rounded-xs cursor-pointer transition-colors ${
+                    isProcessing ? 'opacity-60 pointer-events-none' : ''
+                  }`}
+                >
                   <Plus className="w-3.5 h-3.5" />
                   {form.heroPhoto ? 'Trocar foto' : 'Escolher foto'}
                   <input
@@ -425,6 +441,7 @@ export const ClientDadosPage: React.FC = () => {
                     accept={ACCEPTED_IMAGE_ATTR}
                     className="hidden"
                     onChange={handleHeroFile}
+                    disabled={isProcessing}
                   />
                 </label>
                 {form.heroPhoto && (
@@ -450,7 +467,7 @@ export const ClientDadosPage: React.FC = () => {
               {form.gallery.map((photo) => (
                 <div key={photo.id} className="space-y-1.5">
                   <div className="relative aspect-square border border-stone-200 rounded-xs overflow-hidden">
-                    <img
+                    <SmartImage
                       src={photo.url}
                       alt={photo.caption || 'Foto da galeria'}
                       className="w-full h-full object-cover"
@@ -473,7 +490,11 @@ export const ClientDadosPage: React.FC = () => {
                 </div>
               ))}
               {form.gallery.length < galleryLimit && (
-                <label className="aspect-square border border-dashed border-stone-300 rounded-xs flex flex-col items-center justify-center gap-1 text-stone-400 hover:border-[#5E6B56] hover:text-[#5E6B56] cursor-pointer transition-colors">
+                <label
+                  className={`aspect-square border border-dashed border-stone-300 rounded-xs flex flex-col items-center justify-center gap-1 text-stone-400 hover:border-[#5E6B56] hover:text-[#5E6B56] cursor-pointer transition-colors ${
+                    isProcessing ? 'opacity-60 pointer-events-none' : ''
+                  }`}
+                >
                   <Plus className="w-5 h-5" />
                   <span className="text-[10px] uppercase tracking-wider font-sans">Adicionar</span>
                   <input
@@ -482,6 +503,7 @@ export const ClientDadosPage: React.FC = () => {
                     multiple
                     className="hidden"
                     onChange={handleGalleryFiles}
+                    disabled={isProcessing}
                   />
                 </label>
               )}
@@ -494,6 +516,13 @@ export const ClientDadosPage: React.FC = () => {
               </p>
             )}
           </div>
+
+          {isProcessing && (
+            <p className="flex items-center gap-2 text-xs text-[#5E6B56] font-sans" aria-live="polite">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              A optimizar a foto, um instante…
+            </p>
+          )}
 
           {photoError && (
             <p className="text-xs text-red-700 font-sans">{photoError}</p>

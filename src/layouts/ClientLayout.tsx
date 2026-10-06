@@ -1,4 +1,5 @@
 import React from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   Home,
@@ -126,12 +127,19 @@ export const ClientLayout: React.FC = () => {
           </div>
         </aside>
 
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 z-30 bg-black/40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div
+              key="backdrop-sidebar"
+              className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22, ease: [0.4, 0, 1, 1] }}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Conteúdo */}
         <div className="flex-1 min-w-0 flex flex-col">

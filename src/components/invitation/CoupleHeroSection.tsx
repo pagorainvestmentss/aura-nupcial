@@ -2,6 +2,7 @@ import React from 'react';
 import { WeddingEvent, ColorPalette } from '../../types/wedding';
 import { BotanicalWreath, BotanicalDivider } from '../common/BotanicalFlourish';
 import { eventNames } from '../../data/occasions';
+import { SmartImage } from '../motion/SmartImage';
 
 interface CoupleHeroSectionProps {
   event: WeddingEvent;
@@ -65,7 +66,7 @@ export const CoupleHeroSection: React.FC<CoupleHeroSectionProps> = ({
         >
           {event.heroPhoto ? (
             <>
-              <img
+              <SmartImage
                 src={event.heroPhoto}
                 alt={names || 'Foto do evento'}
                 referrerPolicy="no-referrer"

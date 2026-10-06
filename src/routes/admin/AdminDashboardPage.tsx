@@ -11,6 +11,7 @@ import {
   QrCode
 } from 'lucide-react';
 import { WeddingStorageService } from '../../services/weddingStorage';
+import { Reveal } from '../../components/motion/Reveal';
 
 /**
  * Dashboard do ADMIN — métricas globais da plataforma.
@@ -70,7 +71,7 @@ export const AdminDashboardPage: React.FC = () => {
       </div>
 
       {/* KPIs principais */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <Reveal className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {kpis.map((k) => (
           <div key={k.label} className="bg-white border border-slate-200 rounded-sm p-5">
             <div className="flex items-center justify-between">
@@ -81,10 +82,10 @@ export const AdminDashboardPage: React.FC = () => {
             <p className="text-[11px] text-slate-400 mt-1">{k.sub}</p>
           </div>
         ))}
-      </div>
+      </Reveal>
 
       {/* RSVP */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <Reveal className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {rsvpKpis.map((k) => (
           <div key={k.label} className="bg-white border border-slate-200 rounded-sm p-5">
             <div className="flex items-center justify-between">
@@ -95,7 +96,7 @@ export const AdminDashboardPage: React.FC = () => {
             <p className="text-[11px] text-slate-400 mt-1">{k.sub}</p>
           </div>
         ))}
-      </div>
+      </Reveal>
 
       {/* Eventos recentes */}
       <div className="bg-white border border-slate-200 rounded-sm overflow-hidden">

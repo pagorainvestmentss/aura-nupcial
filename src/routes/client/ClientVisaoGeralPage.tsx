@@ -18,6 +18,7 @@ import { WeddingStorageService } from '../../services/weddingStorage';
 import { eventNames, getOccasion } from '../../data/occasions';
 import { planGuestLimitLabel } from '../../data/site';
 import { PlanId } from '../../types/wedding';
+import { Reveal } from '../../components/motion/Reveal';
 
 /**
  * VISÃO GERAL (cliente) — primeiros passos, plano e respostas, em linguagem simples.
@@ -299,7 +300,7 @@ export const ClientVisaoGeralPage: React.FC = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <Reveal className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="bg-white border border-stone-200 rounded-xs p-5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase tracking-wider text-stone-400 font-sans">
@@ -340,9 +341,9 @@ export const ClientVisaoGeralPage: React.FC = () => {
           </div>
           <p className="text-3xl font-serif text-amber-700 mt-2">{pending.length}</p>
         </div>
-      </div>
+      </Reveal>
 
-      <div className="grid sm:grid-cols-2 gap-4">
+      <Reveal className="grid sm:grid-cols-2 gap-4">
         <Link
           to="/cliente/convidados"
           className="bg-white border border-stone-200 rounded-xs p-5 hover:border-[#5E6B56] transition-colors group"
@@ -371,7 +372,7 @@ export const ClientVisaoGeralPage: React.FC = () => {
             <ArrowRight className="w-4 h-4 text-stone-300 group-hover:text-[#5E6B56]" />
           </div>
         </Link>
-      </div>
+      </Reveal>
     </div>
   );
 };

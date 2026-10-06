@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
+import { Reveal } from '../../components/motion/Reveal';
 
 const PLANS = [
   {
@@ -50,7 +51,7 @@ export const PacotesPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+      <Reveal className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
         {PLANS.map((p) => (
           <div
             key={p.name}
@@ -93,7 +94,7 @@ export const PacotesPage: React.FC = () => {
             </Link>
           </div>
         ))}
-      </div>
+      </Reveal>
 
       <p className="text-center text-xs text-stone-500 font-sans mt-8">
         Precisa de algo à medida?{' '}

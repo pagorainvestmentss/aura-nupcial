@@ -4,6 +4,8 @@ import { ArrowRight, Check } from 'lucide-react';
 import paperTexture from '../../assets/images/luxury_paper_texture_1791141333707.jpg';
 import coupleEditorial from '../../assets/images/couple_editorial.jpg';
 import { OCCASION_LIST } from '../../data/occasions';
+import { SmartImage } from '../../components/motion/SmartImage';
+import { Reveal } from '../../components/motion/Reveal';
 
 const STEPS = [
   { n: '01', title: 'Crie a sua conta', text: 'Email e WhatsApp, escolha da ocasião e do pacote — a plataforma prepara o seu convite na hora.' },
@@ -25,6 +27,7 @@ export const HomePage: React.FC = () => {
   return (
     <div>
       {/* Hero */}
+<Reveal>
       <section
         className="relative overflow-hidden border-b border-stone-200"
         style={{
@@ -72,7 +75,7 @@ export const HomePage: React.FC = () => {
           </div>
 
           <div className="relative">
-            <img
+            <SmartImage
               src={coupleEditorial}
               alt="Casal de noivos"
               className="w-full h-[420px] sm:h-[520px] object-cover rounded-xs shadow-2xl"
@@ -86,8 +89,10 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+      </Reveal>
 
       {/* 4 ocasiões */}
+<Reveal>
       <section className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <p className="text-[11px] uppercase tracking-[0.3em] text-stone-400 mb-3">
@@ -125,8 +130,10 @@ export const HomePage: React.FC = () => {
           })}
         </div>
       </section>
+      </Reveal>
 
       {/* Como funciona */}
+<Reveal>
       <section className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <p className="text-[11px] uppercase tracking-[0.3em] text-stone-400 mb-3">
@@ -154,8 +161,10 @@ export const HomePage: React.FC = () => {
           </Link>
         </div>
       </section>
+      </Reveal>
 
       {/* Prova social / destaque */}
+<Reveal>
       <section className="bg-[#F4EFE6] border-y border-stone-200">
         <div className="max-w-4xl mx-auto px-5 sm:px-8 py-16 text-center">
           <p className="font-serif text-2xl sm:text-3xl italic text-stone-800 leading-relaxed">
@@ -167,8 +176,10 @@ export const HomePage: React.FC = () => {
           </p>
         </div>
       </section>
+      </Reveal>
 
       {/* CTA final */}
+<Reveal>
       <section className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20 text-center">
         <h2 className="font-serif text-3xl sm:text-4xl text-stone-900">
           Pronto para surpreender os seus convidados?
@@ -188,6 +199,7 @@ export const HomePage: React.FC = () => {
           </Link>
         </div>
       </section>
+      </Reveal>
     </div>
   );
 };

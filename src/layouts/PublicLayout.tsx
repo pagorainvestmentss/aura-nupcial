@@ -1,10 +1,12 @@
 import React from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../app/AuthContext';
 import { useLocation } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import { OCCASION_LIST } from '../data/occasions';
 import { WHATSAPP_DISPLAY, whatsappLink } from '../data/site';
+import { menuVariants } from '../components/motion/variants';
 
 const NAV_LINKS = [
   { to: '/como-funciona', label: 'Como funciona' },
@@ -101,21 +103,30 @@ export const PublicLayout: React.FC = () => {
           </div>
         </div>
 
-        {menuOpen && (
-          <nav className="md:hidden border-t border-stone-200 bg-[#FAF7F2] px-5 py-4 flex flex-col gap-3 text-[11px] uppercase tracking-[0.18em] font-sans font-medium">
-            {NAV_LINKS.map((l) => (
-              <Link key={l.to} to={l.to} className="text-stone-600 hover:text-stone-900">
-                {l.label}
+        <AnimatePresence initial={false}>
+          {menuOpen && (
+            <motion.nav
+              key="menu-movel"
+              className="md:hidden border-t border-stone-200 bg-[#FAF7F2] px-5 py-4 flex flex-col gap-3 text-[11px] uppercase tracking-[0.18em] font-sans font-medium"
+              variants={menuVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              {NAV_LINKS.map((l) => (
+                <Link key={l.to} to={l.to} className="text-stone-600 hover:text-stone-900">
+                  {l.label}
+                </Link>
+              ))}
+              <Link to="/criar" className="text-[#5E6B56] font-semibold">
+                Criar convite
               </Link>
-            ))}
-            <Link to="/criar" className="text-[#5E6B56] font-semibold">
-              Criar convite
-            </Link>
-            <Link to="/login" className="text-stone-600 hover:text-stone-900">
-              Entrar
-            </Link>
-          </nav>
-        )}
+              <Link to="/login" className="text-stone-600 hover:text-stone-900">
+                Entrar
+              </Link>
+            </motion.nav>
+          )}
+        </AnimatePresence>
       </header>
 
       <main className="flex-1">

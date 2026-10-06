@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, QrCode, Copy, Check } from 'lucide-react';
 import QRCode from 'qrcode';
 import { WeddingStorageService } from '../../services/weddingStorage';
+import { SmartImage } from '../../components/motion/SmartImage';
 
 /**
  * CONVIDADOS (admin) — vista global de todos os eventos, pesquisa, token e QR.
@@ -207,7 +208,7 @@ const QrCodePanel: React.FC<{ url: string }> = ({ url }) => {
   }
 
   return (
-    <img
+    <SmartImage
       src={dataUrl}
       alt="QR Code do convite"
       className="border border-slate-200 rounded-sm"

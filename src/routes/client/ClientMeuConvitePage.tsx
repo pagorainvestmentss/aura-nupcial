@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { COLOR_PALETTES } from '../../data/palettes';
 import { useClientEvent } from './useClientEvent';
 import { getOccasion, eventNames } from '../../data/occasions';
+import { SmartImage } from '../../components/motion/SmartImage';
 
 /**
  * MEU CONVITE (cliente) — pré-visualização, link partilhável e QR.
@@ -190,5 +191,5 @@ const QrPreview: React.FC<{ url: string }> = ({ url }) => {
     return <div className="w-44 h-44 animate-pulse bg-stone-100 rounded-xs" />;
   }
 
-  return <img src={dataUrl} alt="QR do convite" className="w-44 h-44 border border-stone-200 rounded-xs" />;
+  return <SmartImage src={dataUrl} alt="QR do convite" className="w-44 h-44 border border-stone-200 rounded-xs" />;
 };

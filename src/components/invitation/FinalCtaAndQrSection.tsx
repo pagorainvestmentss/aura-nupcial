@@ -3,6 +3,7 @@ import { WeddingEvent, Guest, ColorPalette } from '../../types/wedding';
 import { BotanicalWreath, BotanicalDivider } from '../common/BotanicalFlourish';
 import QRCode from 'qrcode';
 import { QrCode, CheckCircle2, AlertCircle } from 'lucide-react';
+import { SmartImage } from '../motion/SmartImage';
 
 interface FinalCtaAndQrSectionProps {
   event: WeddingEvent;
@@ -135,7 +136,7 @@ export const FinalCtaAndQrSection: React.FC<FinalCtaAndQrSectionProps> = ({
               style={{ border: `1px solid ${palette.hairline}` }}
             >
               {qrDataUrl ? (
-                <img
+                <SmartImage
                   src={qrDataUrl}
                   alt={`QR Code de ${guest.name}`}
                   className="w-full h-full object-contain"
