@@ -11,3 +11,4 @@ test-results/
 playwright-report/
 vite-dev.err
 ocasiao
+.vercel/
