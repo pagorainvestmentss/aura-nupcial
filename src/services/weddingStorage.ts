@@ -1,5 +1,6 @@
 import { WeddingEvent, Guest, Couple, RsvpStatus, QrStatus, PaymentStatus, ClientStatus } from '../types/wedding';
 import { SEED_COUPLES, SEED_EVENTS, SEED_GUESTS, heroPhotoUrl, intimatePhotoUrl, ringsPhotoUrl } from '../data/defaultWeddingData';
+import { paletteForTemplate } from '../data/templates';
 
 const STORAGE_KEYS = {
   COUPLES: 'aura_couples_v2',
@@ -35,6 +36,7 @@ export class WeddingStorageService {
     this.migrateEventOccasions();
     this.migrateLegacyPhotos();
     this.migrateSeedEventStatus();
+    this.migrateTemplatePalettes();
   }
 
   /**
@@ -53,6 +55,33 @@ export class WeddingStorageService {
         if (e.id === 'event-sofia-andre-2027' && e.status === 'draft') {
           changed = true;
           return { ...e, status: 'active' as const };
+        }
+        return e;
+      });
+      if (changed) {
+        localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(migrated));
+      }
+    } catch {
+      // storage corrompido — mantém como está
+    }
+  }
+
+  /**
+   * Migração: atribuir um template no admin gravava só `templateId`, mas o
+   * convite renderiza `paletteId` — alinha a paleta ao template do evento.
+   */
+  private static migrateTemplatePalettes(): void {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.EVENTS);
+      if (!raw) return;
+      const events: WeddingEvent[] = JSON.parse(raw);
+      let changed = false;
+      const migrated = events.map((e) => {
+        if (!e.templateId) return e;
+        const esperada = paletteForTemplate(e.templateId);
+        if (e.paletteId !== esperada) {
+          changed = true;
+          return { ...e, paletteId: esperada };
         }
         return e;
       });
