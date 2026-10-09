@@ -1,0 +1,1 @@
+{"error":{"code":"bad_request","message":"To link a GitHub repository, you need to install the GitHub integration first. Make sure there aren't any typos and that you have access to the repository if it's private.","action":"Install GitHub App","link":"https://github.com/apps/vercel","repo":"aura-nupcial"}}

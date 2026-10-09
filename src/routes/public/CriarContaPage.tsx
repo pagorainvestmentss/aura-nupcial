@@ -21,7 +21,7 @@ export const CriarContaPage: React.FC = () => {
 
   const [step, setStep] = React.useState<'pick' | 'form'>(paramOccasion ? 'form' : 'pick');
   const [occasion, setOccasion] = React.useState<OccasionId | null>(paramOccasion);
-  const [plan, setPlan] = React.useState<PlanId>(paramPlan === 'pro' ? 'pro' : 'essential');
+  const [plan, setPlan] = React.useState<PlanId>(paramPlan === 'premium' ? 'premium' : paramPlan === 'pro' ? 'pro' : 'starter');
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [whatsapp, setWhatsapp] = React.useState('');
@@ -135,7 +135,7 @@ export const CriarContaPage: React.FC = () => {
                 Pacote (pode mudar depois no painel)
               </label>
               <div className="grid grid-cols-2 gap-3">
-                {(['essential', 'pro'] as PlanId[]).map((p) => (
+                {(['starter', 'pro', 'premium'] as PlanId[]).map((p) => (
                   <button
                     key={p}
                     type="button"
@@ -147,10 +147,10 @@ export const CriarContaPage: React.FC = () => {
                     }`}
                   >
                     <p className="font-serif text-base text-stone-900">
-                      {p === 'essential' ? 'Essential' : 'Pro'}
+                      {p === 'starter' ? 'Starter' : p === 'pro' ? 'Pro' : 'Premium'}
                     </p>
                     <p className="text-[11px] font-sans text-stone-500 mt-0.5">
-                      {p === 'essential' ? 'Até 80 convidados' : 'Convidados ilimitados'}
+                      {p === 'starter' ? 'Até 30 convidados' : p === 'pro' ? 'Até 100 convidados' : 'Ilimitados'}
                     </p>
                   </button>
                 ))}

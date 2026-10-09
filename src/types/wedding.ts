@@ -10,7 +10,7 @@ export type ClientStatus = 'active' | 'suspended';
 
 export type PaymentStatus = 'paid' | 'pending' | 'overdue';
 
-export type PlanId = 'essential' | 'pro';
+export type PlanId = 'starter' | 'pro' | 'premium';
 
 export type OccasionId = 'casamento' | 'noivado' | 'aniversario' | 'outra';
 

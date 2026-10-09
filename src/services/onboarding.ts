@@ -110,7 +110,7 @@ export function createAccount(params: CreateAccountParams): CreateAccountResult 
   );
   if (existing) return { ok: false, error: 'Já existe uma conta com este email. Faça login.' };
 
-  const plan: PlanId = params.plan === 'pro' ? 'pro' : 'essential';
+  const plan: PlanId = params.plan === 'pro' ? 'pro' : 'starter';
   const coupleId = `couple-${Date.now().toString(36)}`;
 
   const couple: Couple = {

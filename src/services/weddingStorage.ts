@@ -473,7 +473,7 @@ export class WeddingStorageService {
     const couple = this.getCoupleById(coupleId);
     if (!couple) return;
 
-    const upgrade = couple.plan === 'essential' && plan === 'pro';
+    const upgrade = couple.plan === 'starter' && plan === 'pro';
     if (upgrade) {
       if (couple.pendingPlan === 'pro') return;
       couple.pendingPlan = 'pro';
@@ -482,7 +482,7 @@ export class WeddingStorageService {
     }
 
     // Downgrade ou cancelamento de um pedido pendente.
-    couple.plan = plan === 'pro' ? 'pro' : 'essential';
+    couple.plan = plan === 'pro' ? 'pro' : 'starter';
     couple.pendingPlan = null;
     this.saveCouple(couple);
   }

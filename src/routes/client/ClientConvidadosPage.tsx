@@ -28,7 +28,7 @@ export const ClientConvidadosPage: React.FC = () => {
 
   const refresh = () => setVersion((v) => v + 1);
 
-  const plan = couple?.plan || 'essential';
+  const plan = couple?.plan || 'starter';
   const atLimit = !canAddGuest(plan, guests.length);
 
   const filtered = guests.filter((g) =>
@@ -147,7 +147,7 @@ export const ClientConvidadosPage: React.FC = () => {
         <div className="bg-amber-50 border border-amber-200 rounded-xs px-4 py-3 flex flex-wrap items-center gap-3">
           <Users className="w-4 h-4 text-amber-600 shrink-0" />
           <p className="text-xs font-sans text-amber-800 flex-1 min-w-52">
-            Limite do plano {plan === 'pro' ? 'Pro' : 'Essential'} atingido (80 convidados).
+            Limite do plano {plan === 'pro' ? 'Pro' : 'Starter'} atingido (30 convidados).
             Faça upgrade para o Pro e continue sem limites.
           </p>
           <Link

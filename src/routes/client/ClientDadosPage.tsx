@@ -81,7 +81,7 @@ const [isProcessing, setIsProcessing] = React.useState(false);
 
   const galleryLimit = isPro
     ? PLAN_GALLERY_LIMIT.pro
-    : PLAN_GALLERY_LIMIT.essential;
+    : PLAN_GALLERY_LIMIT.starter;
 
   /** Foto escolhida: redimensiona/comprime no navegador e coloca no formulário. */
   const readFileAsPhoto = async (file: File): Promise<string | null> => {

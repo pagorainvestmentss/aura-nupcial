@@ -11,7 +11,7 @@ export function whatsappLink(message?: string): string {
 
 /** Limite de convidados por pacote — null = ilimitado. */
 export const PLAN_GUEST_LIMIT: Record<PlanId, number | null> = {
-  essential: 80,
+  starter: 30,
   pro: null
 };
 
@@ -27,7 +27,7 @@ export function canAddGuest(plan: PlanId, currentCount: number): boolean {
 
 /** Limite de fotos da galeria do convite por plano. */
 export const PLAN_GALLERY_LIMIT: Record<PlanId, number> = {
-  essential: 6,
+  starter: 6,
   pro: 20
 };
 

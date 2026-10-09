@@ -7,14 +7,14 @@ import { EASE_OUT, staggerChild } from '../../components/motion/variants';
 
 const PLANS = [
   {
-    name: 'Essential',
-    price: '85.000',
+    name: 'Starter',
+    price: '45.000',
     currency: 'Kz',
     period: 'pagamento único',
     highlight: false,
     features: [
       'Convite digital personalizado',
-      'Até 80 convidados',
+      'Até 30 convidados',
       'Links individuais intransmissíveis',
       'RSVP em tempo real',
       'Cronograma, versículo e galeria',
@@ -24,19 +24,35 @@ const PLANS = [
   },
   {
     name: 'Pro',
-    price: '150.000',
+    price: '120.000',
     currency: 'Kz',
     period: 'pagamento único',
     highlight: true,
     features: [
-      'Tudo do Essential',
-      'Convidados ilimitados',
+      'Tudo do Starter',
+      'Até 100 convidados',
       'QR Code de check-in no dia',
       'Manual do convidado e declarações',
       'Música ambiente no convite',
-      'Até 3 revisões de design',
+      'Até 2 revisões de design',
       'Suporte prioritário WhatsApp',
       'Relatório de confirmações exportável'
+    ]
+  },
+  {
+    name: 'Premium',
+    price: '200.000',
+    currency: 'Kz',
+    period: 'pagamento único',
+    highlight: false,
+    features: [
+      'Tudo do Pro',
+      'Ilimitados convidados',
+      'Galeria de fotos ilimitada',
+      'Até 5 revisões de design',
+      'Prioridade absoluta no suporte',
+      'Análises avançadas (who confirmed, check-in times)',
+      'Domínio personalizado para o convite'
     ]
   }
 ];

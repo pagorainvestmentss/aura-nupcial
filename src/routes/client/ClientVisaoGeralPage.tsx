@@ -36,8 +36,8 @@ export const ClientVisaoGeralPage: React.FC = () => {
 
   const switchPlan = (plan: PlanId) => {
     if (!couple) return;
-    const upgrade = couple.plan === 'essential' && plan === 'pro' && couple.pendingPlan !== 'pro';
-    const downgrade = couple.plan === 'pro' && plan === 'essential';
+    const upgrade = couple.plan === 'starter' && plan === 'pro' && couple.pendingPlan !== 'pro';
+    const downgrade = couple.plan === 'pro' && plan === 'starter';
     if (!upgrade && !downgrade) return;
     const msg = upgrade
       ? 'Pedir o upgrade para o plano Pro (convidados ilimitados)? O pagamento é confirmado pela equipa — o plano só muda depois de aprovado.'
@@ -268,7 +268,7 @@ export const ClientVisaoGeralPage: React.FC = () => {
         </div>
 
         <div className="grid sm:grid-cols-2 gap-3">
-          {(['essential', 'pro'] as PlanId[]).map((p) => {
+          {(['starter', 'pro'] as PlanId[]).map((p) => {
             const active = couple.plan === p;
             const requested = couple.pendingPlan === p && !active;
             return (
@@ -283,7 +283,8 @@ export const ClientVisaoGeralPage: React.FC = () => {
               >
                 <div className="flex items-center justify-between">
                   <p className="font-serif text-lg text-stone-900">
-                    {p === 'essential' ? 'Essential' : 'Pro'}
+                    {p === 'starter' ? 'Starter' : 'Pro'}
+                  </p>
                   </p>
                   {active && (
                     <span className="text-[10px] uppercase tracking-widest text-[#5E6B56] font-semibold">
@@ -300,9 +301,9 @@ export const ClientVisaoGeralPage: React.FC = () => {
                   {planGuestLimitLabel(p)}
                 </p>
                 <p className="text-[11px] text-stone-400 font-sans mt-1">
-                  {p === 'essential'
-                    ? '85.000 Kz · RSVP e envio por WhatsApp'
-                    : '150.000 Kz · + QR Code, música e relatórios'}
+                  {p === 'starter'
+                    ? '45.000 Kz · RSVP e envio por WhatsApp'
+                    : '120.000 Kz · + QR Code, música e relatórios'}
                 </p>
               </button>
             );
@@ -341,7 +342,7 @@ export const ClientVisaoGeralPage: React.FC = () => {
           </div>
           <p className="text-3xl font-serif text-stone-900 mt-2">{guests.length}</p>
           <p className="text-[11px] text-stone-400 font-sans mt-1">
-            {couple.plan === 'essential' ? 'limite 80 · plano Essential' : 'ilimitados · plano Pro'}
+            {couple.plan === 'starter' ? 'limite 30 · plano Starter' : 'ilimitados · plano Pro'}
           </p>
         </div>
         <div className="bg-white border border-stone-200 rounded-xs p-5">

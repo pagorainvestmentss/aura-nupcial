@@ -17,7 +17,7 @@ export const AdminClientesPage: React.FC = () => {
     name: '',
     email: '',
     phone: '',
-    plan: 'essential' as PlanId,
+    plan: 'starter' as PlanId,
     password: ''
   });
 
@@ -34,7 +34,7 @@ export const AdminClientesPage: React.FC = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', email: '', phone: '', plan: 'essential', password: '' });
+    setForm({ name: '', email: '', phone: '', plan: 'starter', password: '' });
     setModalOpen(true);
   };
 
@@ -247,7 +247,7 @@ export const AdminClientesPage: React.FC = () => {
                     onChange={(e) => setForm({ ...form, plan: e.target.value as PlanId })}
                     className="w-full py-2 px-3 text-sm bg-white border border-slate-300 rounded-sm"
                   >
-                    <option value="essential">Essential</option>
+                    <option value="starter">Starter</option>
                     <option value="pro">Pro</option>
                   </select>
                 </div>
