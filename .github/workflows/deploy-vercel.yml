@@ -1,0 +1,46 @@
+name: Deploy na Vercel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-vercel
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy a produção
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verificar segredo VERCEL_TOKEN
+        id: token
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            echo "existe=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "existe=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Segredo VERCEL_TOKEN por configurar — deploy omitido nesta execução."
+          fi
+
+      - name: Deploy em produção
+        if: steps.token.outputs.existe == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_zODbf1ZlkzgzOfuk33ASR8xC
+          VERCEL_PROJECT_ID: prj_4S4nyRFI8GaIEMC4ihd6XRA7L3Lz
+        run: npx --yes vercel@54.21.1 deploy --prod --yes
