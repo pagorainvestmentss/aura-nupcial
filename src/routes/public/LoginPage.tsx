@@ -113,7 +113,7 @@ export const LoginPage: React.FC = () => {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={mode === 'admin' ? 'admin@auranupcial.com' : 'o.seu.email@exemplo.com'}
+              placeholder={mode === 'admin' ? 'email de administração' : 'o.seu.email@exemplo.com'}
               className="w-full py-2.5 px-3 text-sm font-sans bg-[#FAF7F2] border border-stone-300 rounded-xs focus:outline-none focus:border-[#5E6B56]"
             />
           </div>
@@ -157,41 +157,47 @@ export const LoginPage: React.FC = () => {
           )}
         </form>
 
-        <div className="mt-5 pt-5 border-t border-stone-200">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-stone-400 text-center mb-3">
-            Acesso rápido de demonstração
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => quickLogin('cliente')}
-              className="px-3 py-2.5 text-[11px] font-sans font-medium text-stone-700 bg-[#FAF7F2] border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors cursor-pointer"
-            >
-              Entrar como cliente
-            </button>
-            <button
-              onClick={() => quickLogin('admin')}
-              className="px-3 py-2.5 text-[11px] font-sans font-medium text-slate-700 bg-slate-100 border border-slate-300 hover:bg-slate-200 rounded-xs transition-colors cursor-pointer"
-            >
-              Entrar como admin
-            </button>
+        {/* Acesso rápido de demonstração — apenas em desenvolvimento.
+            Nunca aparece em produção (as credenciais de admin sairiam no bundle). */}
+        {import.meta.env.DEV && (
+          <div className="mt-5 pt-5 border-t border-stone-200">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-stone-400 text-center mb-3">
+              Acesso rápido de demonstração
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => quickLogin('cliente')}
+                className="px-3 py-2.5 text-[11px] font-sans font-medium text-stone-700 bg-[#FAF7F2] border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors cursor-pointer"
+              >
+                Entrar como cliente
+              </button>
+              <button
+                onClick={() => quickLogin('admin')}
+                className="px-3 py-2.5 text-[11px] font-sans font-medium text-slate-700 bg-slate-100 border border-slate-300 hover:bg-slate-200 rounded-xs transition-colors cursor-pointer"
+              >
+                Entrar como admin
+              </button>
+            </div>
+            <p className="text-[11px] text-stone-500 font-sans mt-3 text-center leading-relaxed">
+              Cliente: mariana.pedro@auranupcial.com (sem palavra-passe)
+              <br />
+              Admin: admin@auranupcial.com / admin123
+            </p>
           </div>
-          <p className="text-[11px] text-stone-500 font-sans mt-3 text-center leading-relaxed">
-            Cliente: mariana.pedro@auranupcial.com (sem palavra-passe)
-            <br />
-            Admin: admin@auranupcial.com / admin123
-          </p>
-        </div>
+        )}
       </div>
 
-      <p className="text-center text-xs text-stone-500 font-sans mt-6">
-        É convidado?{' '}
-        <Link
-          to="/convite/mariana-pedro/8Fk92KsP"
-          className="text-[#5E6B56] hover:underline"
-        >
-          Abra directamente o seu convite
-        </Link>
-      </p>
+      {import.meta.env.DEV && (
+        <p className="text-center text-xs text-stone-500 font-sans mt-6">
+          É convidado?{' '}
+          <Link
+            to="/convite/mariana-pedro/8Fk92KsP"
+            className="text-[#5E6B56] hover:underline"
+          >
+            Abra directamente o seu convite
+          </Link>
+        </p>
+      )}
     </div>
   );
 };

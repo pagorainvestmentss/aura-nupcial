@@ -7,15 +7,37 @@ const SESSION_KEY = 'aura_session_v1';
 
 /**
  * Contas de administrador da plataforma.
- * Em produção estes dados vivem no backend (Supabase Auth) — nunca no cliente.
+ * Produção: credenciais vêm do ambiente (VITE_ADMIN_EMAIL / VITE_ADMIN_PASSWORD).
+ * Desenvolvimento: conta de cortesia local — NUNCA chega ao bundle de produção.
+ * Em produção com Supabase Auth (Fase 2) este mecanismo é substituído.
  */
-const ADMIN_ACCOUNTS = [
-  {
-    email: 'admin@auranupcial.com',
-    password: 'admin123',
-    displayName: 'Administração Aura Nupcial'
+export interface AdminAccount {
+  email: string;
+  password: string;
+  displayName: string;
+}
+
+const DEV_ADMIN: AdminAccount = {
+  email: 'admin@auranupcial.com',
+  password: 'admin123',
+  displayName: 'Administração Aura Nupcial'
+};
+
+export function getAdminAccounts(
+  env: { DEV?: boolean; VITE_ADMIN_EMAIL?: string; VITE_ADMIN_PASSWORD?: string } = import.meta.env
+): AdminAccount[] {
+  if (env.VITE_ADMIN_EMAIL && env.VITE_ADMIN_PASSWORD) {
+    return [
+      { email: env.VITE_ADMIN_EMAIL, password: env.VITE_ADMIN_PASSWORD, displayName: 'Administração Aura Nupcial' }
+    ];
   }
-];
+  // `import.meta.env.DEV` é substituído estaticamente no build de produção,
+  // pelo que o ramo abaixo (e as credenciais de cortesia) é eliminado do bundle.
+  if (import.meta.env.DEV && env.DEV !== false) {
+    return [DEV_ADMIN];
+  }
+  return [];
+}
 
 interface AuthContextValue {
   session: AuthSession | null;
@@ -51,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = useCallback((email: string, password?: string): { ok: boolean; error?: string } => {
     const normalized = email.trim().toLowerCase();
 
-    const admin = ADMIN_ACCOUNTS.find((a) => a.email === normalized);
+    const admin = getAdminAccounts().find((a) => a.email === normalized);
     if (admin) {
       if (admin.password !== password) return { ok: false, error: 'Palavra-passe incorreta.' };
       const next: AuthSession = {
