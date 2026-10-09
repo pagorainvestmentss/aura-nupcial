@@ -109,7 +109,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const register = useCallback(
-    (params: { name: string; email: string; whatsapp: string; occasion: OccasionId }): { ok: boolean; error?: string } => {
+    (params: {
+      name: string;
+      email: string;
+      whatsapp: string;
+      occasion: OccasionId;
+      plan?: PlanId;
+    }): { ok: boolean; error?: string } => {
       const result = createAccount(params);
       if (!result.ok || !result.couple) return { ok: false, error: result.error || 'Não foi possível criar a conta.' };
 

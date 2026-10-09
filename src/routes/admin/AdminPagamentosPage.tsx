@@ -83,6 +83,9 @@ export const AdminPagamentosPage: React.FC = () => {
                   <p className="font-medium text-slate-900 truncate">{c.name}</p>
                   <p className="text-[11px] text-slate-400">
                     {c.email} · pacote {PLAN_LABEL[c.plan]}
+                    {c.pendingPlan && c.pendingPlan !== c.plan
+                      ? ` · ${PLAN_LABEL[c.pendingPlan]} pedido pelo cliente`
+                      : ''}
                   </p>
                 </div>
               </div>
@@ -95,16 +98,18 @@ export const AdminPagamentosPage: React.FC = () => {
               </span>
 
               <div className="flex items-center gap-2">
-                {c.paymentStatus !== 'paid' && (
+                {((c.paymentStatus !== 'paid' || Boolean(c.pendingPlan)) && (
                   <button
                     disabled={saving === c.id}
                     onClick={() => setPayment(c, 'paid')}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-sm border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer disabled:opacity-60"
                   >
                     <CheckCircle2 className="w-3 h-3" />
-                    Confirmar pagamento
+                    {c.pendingPlan && c.pendingPlan !== c.plan
+                      ? 'Confirmar upgrade'
+                      : 'Confirmar pagamento'}
                   </button>
-                )}
+                ))}
                 {(['paid', 'pending', 'overdue'] as PaymentStatus[]).map((s) => (
                   <button
                     key={s}

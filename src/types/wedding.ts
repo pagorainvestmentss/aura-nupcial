@@ -168,6 +168,11 @@ export interface Couple {
   phone: string;
   createdAt: string;
   plan: PlanId;
+  /**
+   * Upgrade pedido pelo cliente (ex.: Essential → Pro) que só passa a
+   * `plan` quando a equipa confirma o pagamento. `null`/ausente = sem pedido.
+   */
+  pendingPlan?: PlanId | null;
   activeEventId: string;
   status: ClientStatus;
   paymentStatus: PaymentStatus;
