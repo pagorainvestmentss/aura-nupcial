@@ -134,6 +134,27 @@ describe('eventos', () => {
     expect(WeddingStorageService.getEventById('event-joana-miguel-2026')).toBeUndefined();
     expect(WeddingStorageService.getEvents()).toHaveLength(2);
   });
+
+  it('deleteEvent apaga em cascata os convidados e limpa a referência do casal', () => {
+    expect(WeddingStorageService.getGuestsByEventId('event-joana-miguel-2026').length).toBeGreaterThan(0);
+
+    WeddingStorageService.deleteEvent('event-joana-miguel-2026');
+
+    expect(WeddingStorageService.getGuestsByEventId('event-joana-miguel-2026')).toHaveLength(0);
+    expect(WeddingStorageService.getCoupleById('couple-joana-miguel')?.activeEventId).toBe('');
+    expect(WeddingStorageService.getGuestsByEventId('event-mariana-pedro-2027').length).toBeGreaterThan(0);
+  });
+
+  it('deleteCouple apaga em cascata os eventos e convidados do casal', () => {
+    WeddingStorageService.deleteCouple('couple-joana-miguel');
+
+    expect(WeddingStorageService.getCoupleById('couple-joana-miguel')).toBeUndefined();
+    expect(WeddingStorageService.getEventById('event-joana-miguel-2026')).toBeUndefined();
+    expect(WeddingStorageService.getGuestsByEventId('event-joana-miguel-2026')).toHaveLength(0);
+    expect(WeddingStorageService.getCouples()).toHaveLength(2);
+    expect(WeddingStorageService.getEvents()).toHaveLength(2);
+    expect(WeddingStorageService.getGuests().length).toBeGreaterThan(0);
+  });
 });
 
 describe('convidados', () => {
@@ -291,6 +312,52 @@ describe('definições da plataforma', () => {
       supportPhone: '+244 900'
     });
     expect(WeddingStorageService.getSettings().brandName).toBe('Outro Nome');
+  });
+});
+
+describe('planos (requestPlanChange + pagamento)', () => {
+  it('upgrade Essential → Pro fica pendente; plan não muda antes do pagamento', () => {
+    WeddingStorageService.requestPlanChange('couple-sofia-andre', 'pro');
+
+    const c = WeddingStorageService.getCoupleById('couple-sofia-andre')!;
+    expect(c.plan).toBe('essential');
+    expect(c.pendingPlan).toBe('pro');
+  });
+
+  it('pedido de upgrade repetido é idempotente', () => {
+    WeddingStorageService.requestPlanChange('couple-sofia-andre', 'pro');
+    WeddingStorageService.requestPlanChange('couple-sofia-andre', 'pro');
+
+    const c = WeddingStorageService.getCoupleById('couple-sofia-andre')!;
+    expect(c.plan).toBe('essential');
+    expect(c.pendingPlan).toBe('pro');
+  });
+
+  it('confirmação de pagamento activa o upgrade pendente', () => {
+    WeddingStorageService.requestPlanChange('couple-sofia-andre', 'pro');
+    WeddingStorageService.setPaymentStatus('couple-sofia-andre', 'paid');
+
+    const c = WeddingStorageService.getCoupleById('couple-sofia-andre')!;
+    expect(c.paymentStatus).toBe('paid');
+    expect(c.plan).toBe('pro');
+    expect(c.pendingPlan).toBeNull();
+  });
+
+  it('pagamento sem pedido pendente não altera o plano', () => {
+    WeddingStorageService.setPaymentStatus('couple-joana-miguel', 'paid');
+
+    const c = WeddingStorageService.getCoupleById('couple-joana-miguel')!;
+    expect(c.paymentStatus).toBe('paid');
+    expect(c.plan).toBe('essential');
+    expect(c.pendingPlan).toBeFalsy();
+  });
+
+  it('downgrade Pro → Essential é imediato e limpa pedidos pendentes', () => {
+    WeddingStorageService.requestPlanChange('couple-mariana-pedro', 'essential');
+
+    const c = WeddingStorageService.getCoupleById('couple-mariana-pedro')!;
+    expect(c.plan).toBe('essential');
+    expect(c.pendingPlan).toBeFalsy();
   });
 });
 

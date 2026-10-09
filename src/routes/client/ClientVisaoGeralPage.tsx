@@ -35,18 +35,31 @@ export const ClientVisaoGeralPage: React.FC = () => {
   const opened = guests.reduce((acc, g) => acc + (g.accessCount || 0), 0);
 
   const switchPlan = (plan: PlanId) => {
-    if (!couple || couple.plan === plan) return;
-    const msg =
-      plan === 'pro'
-        ? 'Mudar para o plano Pro (convidados ilimitados)? O pagamento é confirmado pela equipa.'
-        : 'Mudar para o plano Essential (até 80 convidados)?';
+    if (!couple) return;
+    const upgrade = couple.plan === 'essential' && plan === 'pro' && couple.pendingPlan !== 'pro';
+    const downgrade = couple.plan === 'pro' && plan === 'essential';
+    if (!upgrade && !downgrade) return;
+    const msg = upgrade
+      ? 'Pedir o upgrade para o plano Pro (convidados ilimitados)? O pagamento é confirmado pela equipa — o plano só muda depois de aprovado.'
+      : 'Mudar para o plano Essential (até 80 convidados)?';
     if (!confirm(msg)) return;
-    WeddingStorageService.updateCouple({ ...couple, plan });
+    WeddingStorageService.requestPlanChange(couple.id, plan);
     refresh();
   };
 
+  const suspended =
+    couple?.status === 'suspended' || event?.status === 'suspended';
+
   const publish = () => {
     if (!event) return;
+    if (couple?.status === 'suspended') {
+      alert('A sua conta está suspensa pela equipa Aura Nupcial. Contacte-nos para a reactivar.');
+      return;
+    }
+    if (event.status === 'suspended') {
+      alert('Este convite foi suspenso pela equipa Aura Nupcial. Contacte-nos para o reactivar.');
+      return;
+    }
     if (couple?.paymentStatus !== 'paid') return;
     if (event.status === 'active') {
       if (!confirm('Retirar o convite do ar? Os convidados deixam de conseguir abri-lo.')) return;
@@ -180,37 +193,43 @@ export const ClientVisaoGeralPage: React.FC = () => {
                 ) : s.title === 'Publicar o convite' ? (
                   <button
                     onClick={publish}
-                    disabled={!paid && !published}
+                    disabled={suspended || (!paid && !published)}
                     className={`flex items-center w-full text-left rounded-xs p-3.5 border transition-colors ${
-                      paid
+                      paid && !suspended
                         ? 'bg-[#5E6B56] border-[#5E6B56] hover:bg-[#4E5B46] cursor-pointer'
                         : 'bg-stone-50 border-stone-200 cursor-not-allowed'
                     }`}
                   >
-                    <div className={`flex items-start gap-3 w-full ${paid ? 'text-white' : ''}`}>
+                    <div className={`flex items-start gap-3 w-full ${paid && !suspended ? 'text-white' : ''}`}>
                       {s.done ? (
                         <CheckCircle2
-                          className={`w-5 h-5 shrink-0 mt-0.5 ${paid ? 'text-white' : 'text-emerald-600'}`}
+                          className={`w-5 h-5 shrink-0 mt-0.5 ${paid && !suspended ? 'text-white' : 'text-emerald-600'}`}
                         />
                       ) : (
                         <Circle
-                          className={`w-5 h-5 shrink-0 mt-0.5 ${paid ? 'text-white/70' : 'text-stone-300'}`}
+                          className={`w-5 h-5 shrink-0 mt-0.5 ${paid && !suspended ? 'text-white/70' : 'text-stone-300'}`}
                         />
                       )}
                       <div className="flex-1 min-w-0">
                         <p
                           className={`text-sm font-sans font-medium ${
-                            paid ? 'text-white' : 'text-stone-500'
+                            paid && !suspended ? 'text-white' : 'text-stone-500'
                           }`}
                         >
                           {s.done && published ? 'Convite publicado' : 'Publicar o convite'}
                         </p>
-                        <p className={`text-xs font-sans mt-0.5 ${paid ? 'text-white/80' : 'text-stone-400'}`}>
+                        <p
+                          className={`text-xs font-sans mt-0.5 ${
+                            paid && !suspended ? 'text-white/80' : 'text-stone-400'
+                          }`}
+                        >
                           {s.done && published
                             ? 'Pode retirar do ar ou re-publicar quando quiser.'
-                            : paid
-                              ? 'Clique para pôr o convite no ar.'
-                              : 'Desbloqueado após confirmação do pagamento.'}
+                            : suspended
+                              ? 'Contacte a equipa Aura Nupcial para reactivar.'
+                              : paid
+                                ? 'Clique para pôr o convite no ar.'
+                                : 'Desbloqueado após confirmação do pagamento.'}
                         </p>
                       </div>
                       <Rocket className="w-4 h-4 shrink-0 opacity-70" />
@@ -251,6 +270,7 @@ export const ClientVisaoGeralPage: React.FC = () => {
         <div className="grid sm:grid-cols-2 gap-3">
           {(['essential', 'pro'] as PlanId[]).map((p) => {
             const active = couple.plan === p;
+            const requested = couple.pendingPlan === p && !active;
             return (
               <button
                 key={p}
@@ -270,6 +290,11 @@ export const ClientVisaoGeralPage: React.FC = () => {
                       Actual
                     </span>
                   )}
+                  {requested && (
+                    <span className="text-[10px] uppercase tracking-widest text-amber-600 font-semibold">
+                      Pedido
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-stone-600 font-sans mt-1">
                   {planGuestLimitLabel(p)}
@@ -283,6 +308,12 @@ export const ClientVisaoGeralPage: React.FC = () => {
             );
           })}
         </div>
+        {couple.pendingPlan && couple.pendingPlan !== couple.plan && (
+          <p className="text-[11px] text-amber-700 font-sans mt-3 leading-relaxed">
+            Upgrade a Pro pedido — assim que a equipa confirmar o pagamento, o plano é
+            actualizado e os benefícios são desbloqueados.
+          </p>
+        )}
         {!paid && (
           <p className="text-[11px] text-stone-500 font-sans mt-3 leading-relaxed">
             Depois de escolher o plano, efectue o pagamento e a nossa equipa confirma —

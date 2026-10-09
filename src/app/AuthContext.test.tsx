@@ -97,6 +97,27 @@ describe('AuthContext — registo', () => {
     ).toBe(true);
   });
 
+  it('registo com plano Pro honra o plano escolhido no casal criado', () => {
+    const { result } = renderAuth();
+    let res!: ReturnType<typeof result.current.register>;
+    act(() => {
+      res = result.current.register({
+        name: 'Ana & Diogo',
+        email: 'ana.diogo@exemplo.com',
+        whatsapp: '922 333 444',
+        occasion: 'casamento',
+        plan: 'pro'
+      });
+    });
+
+    expect(res.ok).toBe(true);
+    const casal = WeddingStorageService.getCouples().find(
+      (c) => c.email === 'ana.diogo@exemplo.com'
+    );
+    expect(casal?.plan).toBe('pro');
+    expect(casal?.paymentStatus).toBe('pending');
+  });
+
   it('registo com email existente falha sem criar sessão', () => {
     const { result } = renderAuth();
     let res!: ReturnType<typeof result.current.register>;

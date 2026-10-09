@@ -1,4 +1,4 @@
-import { WeddingEvent, Guest, Couple, RsvpStatus, QrStatus, PaymentStatus, ClientStatus } from '../types/wedding';
+import { WeddingEvent, Guest, Couple, RsvpStatus, QrStatus, PaymentStatus, ClientStatus, PlanId } from '../types/wedding';
 import { SEED_COUPLES, SEED_EVENTS, SEED_GUESTS, heroPhotoUrl, intimatePhotoUrl, ringsPhotoUrl } from '../data/defaultWeddingData';
 
 const STORAGE_KEYS = {
@@ -165,6 +165,17 @@ export class WeddingStorageService {
   }
 
   public static deleteCouple(coupleId: string): void {
+    // Cascata: casal → os seus eventos → os convidados desses eventos.
+    const events = this.getEvents();
+    const removedEventIds = new Set(events.filter(e => e.coupleId === coupleId).map(e => e.id));
+    const keptEvents = events.filter(e => e.coupleId !== coupleId);
+    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(keptEvents));
+
+    if (removedEventIds.size > 0) {
+      const keptGuests = this.getGuests().filter(g => !removedEventIds.has(g.eventId));
+      localStorage.setItem(STORAGE_KEYS.GUESTS, JSON.stringify(keptGuests));
+    }
+
     const couples = this.getCouples().filter(c => c.id !== coupleId);
     localStorage.setItem(STORAGE_KEYS.COUPLES, JSON.stringify(couples));
   }
@@ -359,14 +370,52 @@ export class WeddingStorageService {
     const couple = this.getCoupleById(coupleId);
     if (couple) {
       couple.paymentStatus = paymentStatus;
+      // Upgrade pendente só fica activo quando a equipa confirma o pagamento.
+      if (paymentStatus === 'paid' && couple.pendingPlan) {
+        couple.plan = couple.pendingPlan;
+        couple.pendingPlan = null;
+      }
       this.saveCouple(couple);
     }
   }
 
+  /**
+   * Pedido de mudança de plano pelo cliente.
+   * - Upgrade (→ Pro): NÃO altera `plan` — fica `pendingPlan` até a equipa
+   *   confirmar o pagamento (activação em `setPaymentStatus('paid')`).
+   * - Downgrade (→ Essential): aplicado de imediato (só retira benefícios).
+   */
+  public static requestPlanChange(coupleId: string, plan: PlanId): void {
+    const couple = this.getCoupleById(coupleId);
+    if (!couple) return;
+
+    const upgrade = couple.plan === 'essential' && plan === 'pro';
+    if (upgrade) {
+      if (couple.pendingPlan === 'pro') return;
+      couple.pendingPlan = 'pro';
+      this.saveCouple(couple);
+      return;
+    }
+
+    // Downgrade ou cancelamento de um pedido pendente.
+    couple.plan = plan === 'pro' ? 'pro' : 'essential';
+    couple.pendingPlan = null;
+    this.saveCouple(couple);
+  }
+
   // --- Admin: event lifecycle ---
   public static deleteEvent(eventId: string): void {
+    // Cascata: evento → convidados do evento → referência no casal.
     const events = this.getEvents().filter(e => e.id !== eventId);
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+
+    const guests = this.getGuests().filter(g => g.eventId !== eventId);
+    localStorage.setItem(STORAGE_KEYS.GUESTS, JSON.stringify(guests));
+
+    const couples = this.getCouples().map(c =>
+      c.activeEventId === eventId ? { ...c, activeEventId: '' } : c
+    );
+    localStorage.setItem(STORAGE_KEYS.COUPLES, JSON.stringify(couples));
   }
 
   public static setEventStatus(eventId: string, status: WeddingEvent['status']): void {
