@@ -128,7 +128,7 @@ const [isProcessing, setIsProcessing] = React.useState(false);
       }
       if (files.length > room) {
         setPhotoError(
-          `O seu plano permite atǸ ${galleryLimit} fotos de galeria �?" remova algumas para acrescentar outras.`
+          `O seu plano permite até ${galleryLimit} fotos de galeria — remova algumas para acrescentar outras.`
         );
       }
       patch({ gallery: next });
@@ -147,19 +147,19 @@ const [isProcessing, setIsProcessing] = React.useState(false);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      WeddingStorageService.saveEvent(form);
-      setPhotoError(null);
-      setSaveError(null);
-      setSaved(true);
-      setVersion((v) => v + 1);
-      setTimeout(() => setSaved(false), 3000);
-    } catch {
+    const guardado = WeddingStorageService.saveEvent(form);
+    if (!guardado) {
       setSaved(false);
       setSaveError(
         'Não foi possível guardar — o armazenamento do navegador está cheio. Remova algumas fotos e tente de novo.'
       );
+      return;
     }
+    setPhotoError(null);
+    setSaveError(null);
+    setSaved(true);
+    setVersion((v) => v + 1);
+    setTimeout(() => setSaved(false), 3000);
   };
 
   const field =

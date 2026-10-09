@@ -47,8 +47,9 @@ export const AdminRelatoriosPage: React.FC = () => {
   );
 
   const exportCsv = () => {
+    // 10 colunas — alinhadas com os 10 valores de cada linha (e com a tabela).
     const header =
-      'Evento,Casal,Cliente,Convidados,Confirmados,Recusas,Pendentes,Pessoas confirmadas,Convites abertos,QR utilizados,Taxa %\n';
+      'Evento,Cliente,Convidados,Confirmados,Recusas,Pendentes,Pessoas,Aberturas,QR,Taxa %\n';
     const body = rows
       .map((r) =>
         [

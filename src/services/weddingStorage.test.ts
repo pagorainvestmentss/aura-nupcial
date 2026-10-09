@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { WeddingStorageService, generateRandomToken, extractQrToken } from './weddingStorage';
 import { SEED_EVENTS, heroPhotoUrl, intimatePhotoUrl } from '../data/defaultWeddingData';
 
@@ -434,6 +434,99 @@ describe('planos (requestPlanChange + pagamento)', () => {
     const c = WeddingStorageService.getCoupleById('couple-mariana-pedro')!;
     expect(c.plan).toBe('essential');
     expect(c.pendingPlan).toBeFalsy();
+  });
+});
+
+describe('prazo de resposta (rsvpDeadline)', () => {
+  it('updateRsvp depois do prazo é recusado e não altera o convidado', () => {
+    const eventos = WeddingStorageService.getEvents().map((e) =>
+      e.id === 'event-mariana-pedro-2027' ? { ...e, rsvpDeadline: '2020-01-01' } : e
+    );
+    localStorage.setItem(KEY_EVENTS, JSON.stringify(eventos));
+
+    const antes = WeddingStorageService.getGuests().find((g) => g.id === 'guest-2')!;
+    expect(antes.rsvpStatus).toBe('pending');
+
+    const result = WeddingStorageService.updateRsvp({
+      guestId: 'guest-2',
+      rsvpStatus: 'confirmed',
+      confirmedGuests: 1
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('prazo');
+
+    const depois = WeddingStorageService.getGuests().find((g) => g.id === 'guest-2')!;
+    expect(depois.rsvpStatus).toBe('pending');
+    expect(depois.rsvpDate).toBe(antes.rsvpDate);
+  });
+
+  it('updateRsvp dentro do prazo continua a ser aceite', () => {
+    // Prazo do seed (2027-04-30) está no futuro → resposta gravada.
+    const result = WeddingStorageService.updateRsvp({
+      guestId: 'guest-2',
+      rsvpStatus: 'confirmed',
+      confirmedGuests: 1
+    });
+    expect(result.success).toBe(true);
+    expect(result.error).toBeUndefined();
+  });
+});
+
+describe('armazenamento cheio (cota) não rebenta a aplicação', () => {
+  function simularCota() {
+    return vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+  }
+
+  it('init com armazenamento cheio não lança (seed falha em silêncio)', () => {
+    localStorage.clear();
+    const spy = simularCota();
+    try {
+      expect(() => WeddingStorageService.init()).not.toThrow();
+      // Sem persistência, a app continua a ler os dados de origem.
+      expect(WeddingStorageService.getEvents()).toHaveLength(3);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('saveEvent devolve false em vez de lançar', () => {
+    WeddingStorageService.init();
+    const spy = simularCota();
+    try {
+      const evento = WeddingStorageService.getEvents()[0];
+      expect(WeddingStorageService.saveEvent({ ...evento, locationDisplay: 'Sem espaço' })).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('updateRsvp devolve success:false com error armazenamento', () => {
+    WeddingStorageService.init();
+    const spy = simularCota();
+    try {
+      const result = WeddingStorageService.updateRsvp({
+        guestId: 'guest-2',
+        rsvpStatus: 'confirmed',
+        confirmedGuests: 1
+      });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('armazenamento');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('recordAccess com armazenamento cheio não lança', () => {
+    WeddingStorageService.init();
+    const spy = simularCota();
+    try {
+      expect(() => WeddingStorageService.recordAccess('guest-1')).not.toThrow();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
 

@@ -49,16 +49,31 @@ export function extractQrToken(input: string): string {
 }
 
 export class WeddingStorageService {
+  /**
+   * Escrita segura no localStorage. Armazenamento cheio (cota) NÃO rebenta
+   * a aplicação: fica apenas um aviso na consola e a escrita é ignorada.
+   * Devolve `false` quando não foi possível guardar.
+   */
+  private static persist(key: string, value: unknown): boolean {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (err) {
+      console.warn(`[Aura Nupcial] Armazenamento local sem espaço — não foi possível guardar "${key}".`, err);
+      return false;
+    }
+  }
+
   // --- Initialization & Seed ---
   public static init(): void {
     if (!localStorage.getItem(STORAGE_KEYS.COUPLES)) {
-      localStorage.setItem(STORAGE_KEYS.COUPLES, JSON.stringify(SEED_COUPLES));
+      this.persist(STORAGE_KEYS.COUPLES, SEED_COUPLES);
     }
     if (!localStorage.getItem(STORAGE_KEYS.EVENTS)) {
-      localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(SEED_EVENTS));
+      this.persist(STORAGE_KEYS.EVENTS, SEED_EVENTS);
     }
     if (!localStorage.getItem(STORAGE_KEYS.GUESTS)) {
-      localStorage.setItem(STORAGE_KEYS.GUESTS, JSON.stringify(SEED_GUESTS));
+      this.persist(STORAGE_KEYS.GUESTS, SEED_GUESTS);
     }
     this.migrateEventOccasions();
     this.migrateLegacyPhotos();
@@ -86,7 +101,7 @@ export class WeddingStorageService {
         return e;
       });
       if (changed) {
-        localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(migrated));
+        this.persist(STORAGE_KEYS.EVENTS, migrated);
       }
     } catch {
       // storage corrompido — mantém como está
@@ -113,7 +128,7 @@ export class WeddingStorageService {
         return e;
       });
       if (changed) {
-        localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(migrated));
+        this.persist(STORAGE_KEYS.EVENTS, migrated);
       }
     } catch {
       // storage corrompido — mantém como está
@@ -135,7 +150,7 @@ export class WeddingStorageService {
         return e;
       });
       if (changed) {
-        localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(migrated));
+        this.persist(STORAGE_KEYS.EVENTS, migrated);
       }
     } catch {
       // storage corrompido — mantém como está
@@ -187,7 +202,7 @@ export class WeddingStorageService {
       });
 
       if (changed) {
-        localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(migrated));
+        this.persist(STORAGE_KEYS.EVENTS, migrated);
       }
     } catch {
       // storage corrompido — mantém como está
@@ -217,7 +232,7 @@ export class WeddingStorageService {
     } else {
       list.push(couple);
     }
-    localStorage.setItem(STORAGE_KEYS.COUPLES, JSON.stringify(list));
+    this.persist(STORAGE_KEYS.COUPLES, list);
   }
 
   public static deleteCouple(coupleId: string): void {
@@ -225,15 +240,15 @@ export class WeddingStorageService {
     const events = this.getEvents();
     const removedEventIds = new Set(events.filter(e => e.coupleId === coupleId).map(e => e.id));
     const keptEvents = events.filter(e => e.coupleId !== coupleId);
-    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(keptEvents));
+    this.persist(STORAGE_KEYS.EVENTS, keptEvents);
 
     if (removedEventIds.size > 0) {
       const keptGuests = this.getGuests().filter(g => !removedEventIds.has(g.eventId));
-      localStorage.setItem(STORAGE_KEYS.GUESTS, JSON.stringify(keptGuests));
+      this.persist(STORAGE_KEYS.GUESTS, keptGuests);
     }
 
     const couples = this.getCouples().filter(c => c.id !== coupleId);
-    localStorage.setItem(STORAGE_KEYS.COUPLES, JSON.stringify(couples));
+    this.persist(STORAGE_KEYS.COUPLES, couples);
   }
 
   // --- Event Operations ---
@@ -255,7 +270,7 @@ export class WeddingStorageService {
     return this.getEvents().find(e => e.slug.toLowerCase() === slug.toLowerCase());
   }
 
-  public static saveEvent(event: WeddingEvent): void {
+  public static saveEvent(event: WeddingEvent): boolean {
     const list = this.getEvents();
     const index = list.findIndex(e => e.id === event.id);
     if (index >= 0) {
@@ -263,7 +278,7 @@ export class WeddingStorageService {
     } else {
       list.push(event);
     }
-    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(list));
+    return this.persist(STORAGE_KEYS.EVENTS, list);
   }
 
   // --- Guest Operations ---
@@ -302,7 +317,7 @@ export class WeddingStorageService {
     if (index >= 0) {
       guests[index].accessedAt = new Date().toISOString();
       guests[index].accessCount = (guests[index].accessCount || 0) + 1;
-      localStorage.setItem(STORAGE_KEYS.GUESTS, JSON.stringify(guests));
+      this.persist(STORAGE_KEYS.GUESTS, guests);
     }
   }
 
@@ -314,12 +329,12 @@ export class WeddingStorageService {
     } else {
       list.push(guest);
     }
-    localStorage.setItem(STORAGE_KEYS.GUESTS, JSON.stringify(list));
+    this.persist(STORAGE_KEYS.GUESTS, list);
   }
 
   public static deleteGuest(guestId: string): void {
     const list = this.getGuests().filter(g => g.id !== guestId);
-    localStorage.setItem(STORAGE_KEYS.GUESTS, JSON.stringify(list));
+    this.persist(STORAGE_KEYS.GUESTS, list);
   }
 
   // --- RSVP Submission ---
@@ -331,12 +346,22 @@ export class WeddingStorageService {
     dietaryRestrictions?: string;
     companions?: string[];
     group?: string;
-  }): { success: boolean; guest?: Guest } {
+  }): { success: boolean; guest?: Guest; error?: 'prazo' | 'armazenamento' } {
     const guests = this.getGuests();
     const index = guests.findIndex(g => g.id === params.guestId);
     if (index === -1) return { success: false };
 
     const guest = guests[index];
+
+    // Prazo de resposta: depois do fim do dia de rsvpDeadline não se aceitam respostas.
+    const event = this.getEventById(guest.eventId);
+    if (event?.rsvpDeadline) {
+      const fimDoPrazo = new Date(`${event.rsvpDeadline}T23:59:59`);
+      if (!isNaN(fimDoPrazo.getTime()) && Date.now() > fimDoPrazo.getTime()) {
+        return { success: false, error: 'prazo' };
+      }
+    }
+
     guest.rsvpStatus = params.rsvpStatus;
     guest.confirmedGuests = params.confirmedGuests;
     guest.rsvpNotes = params.notes || '';
@@ -346,7 +371,9 @@ export class WeddingStorageService {
     guest.rsvpDate = new Date().toISOString();
 
     guests[index] = guest;
-    localStorage.setItem(STORAGE_KEYS.GUESTS, JSON.stringify(guests));
+    if (!this.persist(STORAGE_KEYS.GUESTS, guests)) {
+      return { success: false, error: 'armazenamento' };
+    }
 
     return { success: true, guest };
   }
@@ -399,7 +426,7 @@ export class WeddingStorageService {
     guest.qrScannedAt = new Date().toISOString();
     guest.qrScannedBy = scannedBy;
     guests[guestIndex] = guest;
-    localStorage.setItem(STORAGE_KEYS.GUESTS, JSON.stringify(guests));
+    this.persist(STORAGE_KEYS.GUESTS, guests);
 
     return {
       valid: true,
@@ -464,15 +491,15 @@ export class WeddingStorageService {
   public static deleteEvent(eventId: string): void {
     // Cascata: evento → convidados do evento → referência no casal.
     const events = this.getEvents().filter(e => e.id !== eventId);
-    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+    this.persist(STORAGE_KEYS.EVENTS, events);
 
     const guests = this.getGuests().filter(g => g.eventId !== eventId);
-    localStorage.setItem(STORAGE_KEYS.GUESTS, JSON.stringify(guests));
+    this.persist(STORAGE_KEYS.GUESTS, guests);
 
     const couples = this.getCouples().map(c =>
       c.activeEventId === eventId ? { ...c, activeEventId: '' } : c
     );
-    localStorage.setItem(STORAGE_KEYS.COUPLES, JSON.stringify(couples));
+    this.persist(STORAGE_KEYS.COUPLES, couples);
   }
 
   public static setEventStatus(eventId: string, status: WeddingEvent['status']): void {
@@ -480,7 +507,7 @@ export class WeddingStorageService {
     const index = events.findIndex(e => e.id === eventId);
     if (index >= 0) {
       events[index].status = status;
-      localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+      this.persist(STORAGE_KEYS.EVENTS, events);
     }
   }
 
@@ -500,14 +527,14 @@ export class WeddingStorageService {
   }
 
   public static saveSettings(settings: { brandName: string; supportEmail: string; supportPhone: string }): void {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    this.persist(STORAGE_KEYS.SETTINGS, settings);
   }
 
   // Reset to original seed
   public static resetToSeed(): void {
-    localStorage.setItem(STORAGE_KEYS.COUPLES, JSON.stringify(SEED_COUPLES));
-    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(SEED_EVENTS));
-    localStorage.setItem(STORAGE_KEYS.GUESTS, JSON.stringify(SEED_GUESTS));
+    this.persist(STORAGE_KEYS.COUPLES, SEED_COUPLES);
+    this.persist(STORAGE_KEYS.EVENTS, SEED_EVENTS);
+    this.persist(STORAGE_KEYS.GUESTS, SEED_GUESTS);
     localStorage.removeItem(STORAGE_KEYS.SETTINGS);
   }
 }
