@@ -2,8 +2,7 @@ import React from 'react';
 import { Check, Palette } from 'lucide-react';
 import { WeddingStorageService } from '../../services/weddingStorage';
 import { WeddingEvent } from '../../types/wedding';
-
-type TemplateId = WeddingEvent['templateId'];
+import { TemplateId, paletteForTemplate } from '../../data/templates';
 
 interface TemplateInfo {
   id: TemplateId;
@@ -48,7 +47,8 @@ export const AdminTemplatesPage: React.FC = () => {
   const refresh = () => setEvents(WeddingStorageService.getEvents());
 
   const assignTemplate = (event: WeddingEvent, templateId: TemplateId) => {
-    WeddingStorageService.saveEvent({ ...event, templateId });
+    // O convite renderiza `paletteId`, não `templateId` — escreve os dois.
+    WeddingStorageService.saveEvent({ ...event, templateId, paletteId: paletteForTemplate(templateId) });
     refresh();
   };
 

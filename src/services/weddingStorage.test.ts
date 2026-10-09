@@ -75,6 +75,24 @@ describe('migrações no arranque', () => {
     expect(migrado.gallery[0].url).toBe('data:image/jpeg;base64,ABC123');
     expect(migrado.gallery[1].url).toBe(intimatePhotoUrl);
   });
+
+  it('paleta desalinhada do template antigo é corrigida no arranque', () => {
+    // Antigo bug: o admin gravava só templateId e a paleta não mudava.
+    const eventos = [{ ...SEED_EVENTS[0], templateId: 'romance-rose' as const, paletteId: 'sage' as const }];
+    localStorage.setItem(KEY_EVENTS, JSON.stringify(eventos));
+
+    WeddingStorageService.init();
+
+    const depois = WeddingStorageService.getEvents()[0];
+    expect(depois.templateId).toBe('romance-rose');
+    expect(depois.paletteId).toBe('romance');
+  });
+
+  it('eventos já coerentes não são tocados pela migração de paleta', () => {
+    const antes = JSON.stringify(WeddingStorageService.getEvents());
+    WeddingStorageService.init();
+    expect(JSON.stringify(WeddingStorageService.getEvents())).toBe(antes);
+  });
 });
 
 describe('casais', () => {
