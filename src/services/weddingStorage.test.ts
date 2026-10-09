@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { WeddingStorageService, generateRandomToken } from './weddingStorage';
+import { WeddingStorageService, generateRandomToken, extractQrToken } from './weddingStorage';
 import { SEED_EVENTS, heroPhotoUrl, intimatePhotoUrl } from '../data/defaultWeddingData';
 
 const KEY_EVENTS = 'aura_events_v2';
@@ -278,6 +278,64 @@ describe('check-in QR (validateQrCheckIn)', () => {
     const result = WeddingStorageService.validateQrCheckIn(convidado.token);
     expect(result.valid).toBe(false);
     expect(result.status).toBe('REVOKED');
+  });
+
+  it('aceita o URL completo do convite (como os QRs geram)', () => {
+    const convidado = WeddingStorageService.getGuests().find((g) => g.qrStatus === 'active')!;
+    const slug = WeddingStorageService.getEventById(convidado.eventId)!.slug;
+
+    const result = WeddingStorageService.validateQrCheckIn(
+      `https://auranupcial.pt/convite/${slug}/${convidado.token}`,
+      'Portaria'
+    );
+
+    expect(result.valid).toBe(true);
+    expect(result.status).toBe('VALID');
+    expect(result.guest?.id).toBe(convidado.id);
+  });
+
+  it('aceita caminho relativo, barra final e query string', () => {
+    const activos = WeddingStorageService.getGuests().filter((g) => g.qrStatus === 'active');
+    const [primeiro, segundo, terceiro] = activos;
+    const slug = WeddingStorageService.getEventById(primeiro.eventId)!.slug;
+
+    const relativo = WeddingStorageService.validateQrCheckIn(`/convite/${slug}/${primeiro.token}`);
+    expect(relativo.valid).toBe(true);
+
+    const comBarras = WeddingStorageService.validateQrCheckIn(
+      `https://auranupcial.pt/convite/${slug}/${segundo.token}/`
+    );
+    expect(comBarras.valid).toBe(true);
+
+    const comQuery = WeddingStorageService.validateQrCheckIn(
+      `https://auranupcial.pt/convite/${slug}/${terceiro.token}?utm=qr#topo`
+    );
+    expect(comQuery.valid).toBe(true);
+  });
+
+  it('URL com token errado continua a dar NOT_FOUND', () => {
+    const result = WeddingStorageService.validateQrCheckIn(
+      'https://auranupcial.pt/convite/mariana-pedro/NAOEXISTE'
+    );
+    expect(result.valid).toBe(false);
+    expect(result.status).toBe('NOT_FOUND');
+  });
+});
+
+describe('extractQrToken', () => {
+  it('devolve o token puro intacto', () => {
+    expect(extractQrToken('8Fk92KsP')).toBe('8Fk92KsP');
+    expect(extractQrToken('  8Fk92KsP  ')).toBe('8Fk92KsP');
+  });
+
+  it('extrai o token do URL absoluto', () => {
+    expect(extractQrToken('https://aura.pt/convite/mariana-pedro/8Fk92KsP')).toBe('8Fk92KsP');
+  });
+
+  it('extrai o token de caminhos relativos com query e hash', () => {
+    expect(extractQrToken('convite/slug/ABC12345')).toBe('ABC12345');
+    expect(extractQrToken('/convite/slug/ABC12345/')).toBe('ABC12345');
+    expect(extractQrToken('/convite/slug/ABC12345?x=1#y')).toBe('ABC12345');
   });
 });
 

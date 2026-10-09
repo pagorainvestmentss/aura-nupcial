@@ -20,6 +20,33 @@ export function generateRandomToken(prefix = ''): string {
   return prefix ? `${prefix}-${token}` : token;
 }
 
+/**
+ * Extrai o token de convidado de um input de check-in.
+ * Aceita o token puro ("8Fk92KsP") ou o URL completo/relativo que os QRs
+ * geram ("https://exemplo.pt/convite/slug/8Fk92KsP" ou "convite/slug/8Fk92KsP").
+ * Os tokens nunca contêm "/", por isso a última parcela do caminho é o token.
+ */
+export function extractQrToken(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+
+  let path = trimmed;
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      path = new URL(trimmed).pathname;
+    } catch {
+      return trimmed;
+    }
+  } else if (trimmed.includes('/')) {
+    path = trimmed.split(/[?#]/)[0];
+  } else {
+    return trimmed;
+  }
+
+  const parts = path.split('/').filter(Boolean);
+  return parts.length > 0 ? parts[parts.length - 1] : trimmed;
+}
+
 export class WeddingStorageService {
   // --- Initialization & Seed ---
   public static init(): void {
@@ -285,13 +312,14 @@ export class WeddingStorageService {
   }
 
   // --- QR Code Verification & Check-in ---
-  public static validateQrCheckIn(token: string, scannedBy = 'Recepção / Check-in'): {
+  public static validateQrCheckIn(input: string, scannedBy = 'Recepção / Check-in'): {
     valid: boolean;
     status: 'VALID' | 'ALREADY_USED' | 'NOT_FOUND' | 'REVOKED';
     message: string;
     guest?: Guest;
     event?: WeddingEvent;
   } {
+    const token = extractQrToken(input);
     const guests = this.getGuests();
     const guestIndex = guests.findIndex(g => g.token.toLowerCase() === token.toLowerCase());
 
