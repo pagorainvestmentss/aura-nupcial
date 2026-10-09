@@ -116,4 +116,43 @@ describe('InvitationPage — acesso por token (4.º ambiente)', () => {
     expect(depois.accessCount).toBeGreaterThanOrEqual(1);
     expect(depois.accessedAt).toBeTruthy();
   });
+
+  // Os gates correm ANTES da contagem de aberturas: convites bloqueados
+  // não podem inflar "Convites abertos" nos relatórios.
+  function lerAcessos(id: string) {
+    return WeddingStorageService.getGuests().find((g) => g.id === id)?.accessCount ?? 0;
+  }
+
+  it('evento suspenso NÃO conta abertura', () => {
+    let antes = 0;
+    renderConvite('/convite/mariana-pedro/8Fk92KsP', null, () => {
+      WeddingStorageService.init();
+      antes = lerAcessos('guest-1');
+      WeddingStorageService.setEventStatus('event-mariana-pedro-2027', 'suspended');
+    });
+    expect(screen.getByRole('heading', { name: 'Convite Indisponível' })).toBeInTheDocument();
+    expect(lerAcessos('guest-1')).toBe(antes);
+  });
+
+  it('evento em rascunho NÃO conta abertura (sem sessão)', () => {
+    let antes = 0;
+    renderConvite('/convite/mariana-pedro/8Fk92KsP', null, () => {
+      WeddingStorageService.init();
+      antes = lerAcessos('guest-1');
+      WeddingStorageService.setEventStatus('event-mariana-pedro-2027', 'draft');
+    });
+    expect(screen.getByRole('heading', { name: 'Convite Indisponível' })).toBeInTheDocument();
+    expect(lerAcessos('guest-1')).toBe(antes);
+  });
+
+  it('pré-visualização do casal (rascunho) NÃO conta abertura', () => {
+    let antes = 0;
+    renderConvite('/convite/mariana-pedro/8Fk92KsP', convidadoSessao, () => {
+      WeddingStorageService.init();
+      antes = lerAcessos('guest-1');
+      WeddingStorageService.setEventStatus('event-mariana-pedro-2027', 'draft');
+    });
+    expect(screen.getByTestId('convite-aberto')).toBeInTheDocument();
+    expect(lerAcessos('guest-1')).toBe(antes);
+  });
 });

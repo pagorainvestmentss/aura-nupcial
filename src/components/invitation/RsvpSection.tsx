@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { WeddingEvent, Guest, ColorPalette, RsvpStatus } from '../../types/wedding';
 import { WeddingStorageService } from '../../services/weddingStorage';
 import { BotanicalCorner, BotanicalDivider } from '../common/BotanicalFlourish';
-import { Check, X, Users, Utensils, HeartHandshake, UserPlus } from 'lucide-react';
+import { Check, X, Users, Utensils, HeartHandshake, UserPlus, Clock } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { AnimatePresence, motion } from 'motion/react';
 import { getOccasion, eventNames } from '../../data/occasions';
@@ -35,6 +35,7 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
   const [dietary, setDietary] = useState<string>(guest?.dietaryRestrictions || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(guest?.rsvpStatus === 'confirmed' || guest?.rsvpStatus === 'declined');
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [now, setNow] = useState<number>(() => Date.now());
 
   const maxSeats = guest?.maxGuests || 1;
@@ -46,6 +47,11 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
   const deadlineText = isNaN(deadline.getTime())
     ? ''
     : deadline.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Depois do fim do dia de rsvpDeadline o formulário fecha — ver também
+  // a validação no serviço (updateRsvp), para não depender só da UI.
+  const rsvpEnd = new Date(`${event.rsvpDeadline}T23:59:59`);
+  const pastDeadline = !isNaN(rsvpEnd.getTime()) && rsvpEnd.getTime() < now;
 
   // Contagem decrescente viva: conta para o prazo de resposta e, depois,
   // para o dia do evento. Se já passou tudo, não mostra nada.
@@ -72,8 +78,9 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
         ];
 
   const handleSubmit = (chosenStatus: RsvpStatus) => {
-    if (!guest) return;
+    if (!guest || pastDeadline) return;
     setIsSubmitting(true);
+    setSubmitError(null);
 
     const actualConfirmedCount = chosenStatus === 'confirmed' ? Math.max(1, seatCount) : 0;
 
@@ -102,11 +109,19 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
           colors: [palette.accent, palette.goldAccent, '#D8DFD5']
         });
       }
+    } else {
+      setSubmitError(
+        result.error === 'prazo'
+          ? 'O prazo de resposta já terminou. Se ainda precisar de alterar, fale diretamente com os noivos.'
+          : 'Não foi possível guardar a sua resposta. Verifique a ligação e tente novamente.'
+      );
     }
   };
 
   const handleEdit = () => {
+    if (pastDeadline) return;
     setSubmitted(false);
+    setSubmitError(null);
   };
 
   return (
@@ -247,13 +262,53 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
               )}
             </p>
 
-            <button
-              onClick={handleEdit}
-              className="text-xs uppercase tracking-widest font-sans underline hover:text-stone-900 transition-colors cursor-pointer"
-              style={{ color: palette.accent }}
+            {!pastDeadline && (
+              <button
+                onClick={handleEdit}
+                className="text-xs uppercase tracking-widest font-sans underline hover:text-stone-900 transition-colors cursor-pointer"
+                style={{ color: palette.accent }}
+              >
+                Alterar minha resposta
+              </button>
+            )}
+            </motion.div>
+          ) : pastDeadline ? (
+            /* Prazo de resposta encerrado — o formulário deixa de aceitar respostas */
+            <motion.div
+              key="prazo-encerrado"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="p-8 rounded-xs text-center"
+              style={{
+                backgroundColor: palette.paperWarm,
+                border: `1px solid ${palette.hairline}`
+              }}
             >
-              Alterar minha resposta
-            </button>
+              <div
+                className="w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-4"
+                style={{ backgroundColor: '#8C4830', color: '#FFFFFF' }}
+              >
+                <Clock className="w-6 h-6" />
+              </div>
+
+              <h3
+                className="font-serif text-2xl font-normal mb-2"
+                style={{ color: palette.primaryText }}
+              >
+                Prazo de Resposta Encerrado
+              </h3>
+
+              <p
+                className="font-serif italic text-base leading-relaxed"
+                style={{ color: palette.mutedText }}
+              >
+                {deadlineText
+                  ? `O prazo para responder terminou a ${deadlineText}.`
+                  : 'O prazo de resposta já terminou.'}{' '}
+                Se ainda precisar de alterar a sua resposta, fale diretamente com os noivos.
+              </p>
             </motion.div>
           ) : (
             /* Interactive RSVP Form */
@@ -371,6 +426,16 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
                   )}
                 </div>
               </div>
+            )}
+
+            {submitError && (
+              <p
+                role="alert"
+                className="mb-4 text-xs font-sans leading-relaxed"
+                style={{ color: '#8C4830' }}
+              >
+                {submitError}
+              </p>
             )}
 
             {/* Attendance Buttons */}

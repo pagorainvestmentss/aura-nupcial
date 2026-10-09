@@ -28,11 +28,9 @@ export const InvitationPage: React.FC = () => {
     return { event: ev, guest: g || null };
   }, [eventSlug, guestToken]);
 
-  useEffect(() => {
-    if (event && guest) {
-      WeddingStorageService.recordAccess(guest.id);
-    }
-  }, [event, guest]);
+  // NOTA: o acesso (recordAccess) só é registado DENTRO da InvitationShell —
+  // depois de todos os gates (suspenso/rascunho) — para não contar aberturas
+  // de convites bloqueados.
 
   if (!event || !guest) {
     return <InvalidInvitation reason="not_found" onGoHome={() => navigate('/')} />;
@@ -73,6 +71,14 @@ const InvitationShell: React.FC<{
 }> = ({ event, guest, preview }) => {
   const [updatedGuest, setUpdatedGuest] = useState<Guest>(guest);
   const navigate = useNavigate();
+
+  // Contagem de aberturas: só quando o convite abre a um convidado real.
+  // Pré-visualização do casal (rascunho) não conta como abertura.
+  useEffect(() => {
+    if (!preview) {
+      WeddingStorageService.recordAccess(guest.id);
+    }
+  }, [guest.id, preview]);
 
   const allGuests = useMemo(
     () => WeddingStorageService.getGuestsByEventId(event.id),

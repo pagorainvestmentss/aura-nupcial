@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Plus, ExternalLink, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { WeddingStorageService } from '../../services/weddingStorage';
 import { DEFAULT_EVENT } from '../../data/defaultWeddingData';
@@ -169,15 +170,13 @@ export const AdminEventosPage: React.FC = () => {
                 </button>
 
                 {token && ev.status === 'active' && (
-                  <a
-                    href={`/convite/${ev.slug}/${token}`}
-                    target="_blank"
-                    rel="noreferrer"
+                  <Link
+                    to={`/convite/${ev.slug}/${token}`}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-600 border border-slate-300 rounded-sm hover:bg-slate-50"
                   >
                     <ExternalLink className="w-3 h-3" />
                     Ver convite
-                  </a>
+                  </Link>
                 )}
 
                 <button
