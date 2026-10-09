@@ -95,8 +95,8 @@ const InvitationShell: React.FC<{
         </div>
       )}
 
-      {/* Alternateador de convidado — apenas para demonstração (escondido na impressão). */}
-      {allGuests.length > 1 && (
+      {/* Alternateador de convidado — apenas em desenvolvimento (vaza tokens se aparecer em produção). */}
+      {import.meta.env.DEV && allGuests.length > 1 && (
         <aside
           aria-label="Alternar convidado de demonstração"
           className="no-print fixed bottom-3 left-3 z-50 max-w-[calc(100vw-1.5rem)] bg-white/95 backdrop-blur border border-stone-300 rounded-xs shadow-md px-3 py-2 flex flex-wrap items-center gap-1.5"

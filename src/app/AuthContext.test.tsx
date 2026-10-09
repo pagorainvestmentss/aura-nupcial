@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import { AuthProvider, useAuth } from './AuthContext';
+import { AuthProvider, useAuth, getAdminAccounts } from './AuthContext';
 import { WeddingStorageService } from '../services/weddingStorage';
 
 const SESSION_KEY = 'aura_session_v1';
@@ -138,5 +138,38 @@ describe('AuthContext — sessão e logout', () => {
     });
     expect(result.current.session).toBeNull();
     expect(localStorage.getItem(SESSION_KEY)).toBeNull();
+  });
+});
+
+describe('getAdminAccounts — credenciais nunca vazadas em produção', () => {
+  it('produção sem variáveis de ambiente não tem nenhuma conta admin', () => {
+    expect(getAdminAccounts({ DEV: false })).toEqual([]);
+  });
+
+  it('produção usa as credenciais do ambiente (VITE_ADMIN_*)', () => {
+    const contas = getAdminAccounts({
+      DEV: false,
+      VITE_ADMIN_EMAIL: 'chefe@exemplo.pt',
+      VITE_ADMIN_PASSWORD: 'segredo-forte'
+    });
+    expect(contas).toHaveLength(1);
+    expect(contas[0].email).toBe('chefe@exemplo.pt');
+    expect(contas[0].password).toBe('segredo-forte');
+  });
+
+  it('desenvolvimento tem conta de cortesia local', () => {
+    const contas = getAdminAccounts({ DEV: true });
+    expect(contas).toHaveLength(1);
+    expect(contas[0].email).toBe('admin@auranupcial.com');
+  });
+
+  it('variáveis de ambiente têm prioridade sobre a conta de cortesia', () => {
+    const contas = getAdminAccounts({
+      DEV: true,
+      VITE_ADMIN_EMAIL: 'chefe@exemplo.pt',
+      VITE_ADMIN_PASSWORD: 'segredo-forte'
+    });
+    expect(contas).toHaveLength(1);
+    expect(contas[0].email).toBe('chefe@exemplo.pt');
   });
 });
