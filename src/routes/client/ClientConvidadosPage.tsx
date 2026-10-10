@@ -1,10 +1,11 @@
 import React from 'react';
-import { Plus, Pencil, Trash2, Copy, Check, Search, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Copy, Check, Search, Users, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { WeddingStorageService, generateRandomToken } from '../../services/weddingStorage';
 import { Guest, SalutationType } from '../../types/wedding';
 import { useClientEvent } from './useClientEvent';
 import { canAddGuest, planGuestLimitLabel, PLAN_LABEL } from '../../data/site';
+import { guestInviteMessage, whatsappShareLink } from '../../utils/whatsapp';
 
 const EMPTY_FORM = {
   name: '',
@@ -42,6 +43,13 @@ export const ClientConvidadosPage: React.FC = () => {
     navigator.clipboard?.writeText(inviteUrl(token));
     setCopied(token);
     setTimeout(() => setCopied(null), 2000);
+  };
+
+  /** Abre o WhatsApp com o convite do convidado — directo ao chat se tiver telefone. */
+  const shareWhatsapp = (g: Guest) => {
+    if (!event) return;
+    const url = whatsappShareLink(g.phone, guestInviteMessage(event, g, inviteUrl(g.token)));
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const openCreate = () => {
@@ -210,6 +218,14 @@ export const ClientConvidadosPage: React.FC = () => {
                   <Copy className="w-3 h-3" />
                 )}
                 {copied === g.token ? 'Copiado' : 'Copiar link'}
+              </button>
+              <button
+                onClick={() => shareWhatsapp(g)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#5E6B56] border border-[#5E6B56]/40 rounded-xs hover:bg-[#5E6B56]/10 cursor-pointer"
+                title={g.phone ? `Enviar directo para ${g.phone}` : 'Abrir o WhatsApp para escolher o contacto'}
+              >
+                <MessageCircle className="w-3 h-3" />
+                WhatsApp
               </button>
               <button
                 onClick={() => openEdit(g)}
