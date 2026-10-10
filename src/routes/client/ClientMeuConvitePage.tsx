@@ -1,11 +1,12 @@
 import React from 'react';
-import { ExternalLink, Copy, Check, QrCode, Eye, UserPlus, AlertTriangle } from 'lucide-react';
+import { ExternalLink, Copy, Check, QrCode, Eye, UserPlus, AlertTriangle, MessageCircle } from 'lucide-react';
 import QRCode from 'qrcode';
 import { Link, useNavigate } from 'react-router-dom';
 import { COLOR_PALETTES } from '../../data/palettes';
 import { useClientEvent } from './useClientEvent';
 import { getOccasion, eventNames } from '../../data/occasions';
 import { SmartImage } from '../../components/motion/SmartImage';
+import { guestInviteMessage, whatsappShareLink } from '../../utils/whatsapp';
 
 /**
  * MEU CONVITE (cliente) — pré-visualização, link partilhável e QR.
@@ -26,6 +27,15 @@ export const ClientMeuConvitePage: React.FC = () => {
     navigator.clipboard?.writeText(inviteUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareWhatsapp = () => {
+    if (!inviteUrl || !firstGuest) return;
+    const url = whatsappShareLink(
+      firstGuest.phone,
+      guestInviteMessage(event!, firstGuest, inviteUrl),
+    );
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   if (!event) {
@@ -156,6 +166,13 @@ export const ClientMeuConvitePage: React.FC = () => {
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? 'Copiado!' : 'Copiar link'}
+            </button>
+            <button
+              onClick={shareWhatsapp}
+              className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs uppercase tracking-widest font-semibold text-[#5E6B56] border border-[#5E6B56]/40 hover:bg-[#5E6B56]/10 rounded-xs transition-colors cursor-pointer"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Enviar por WhatsApp
             </button>
             <p className="text-[11px] text-stone-400 font-sans mt-2 leading-relaxed">
               É o link de um convidado de exemplo. Os convidados reais recebem cada um o seu.
