@@ -1,13 +1,12 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { HeartHandshake, ShieldCheck, LogIn } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import { useAuth } from '../../app/AuthContext';
 
 /**
- * Login único com dois ambientes separados:
- *  - ADMIN    → /admin    (email + palavra-passe)
- *  - CLIENTE  → /cliente  (apenas email — sem palavra-passe)
- * O convidado NÃO tem conta: acede por token em /convite/:eventSlug/:guestToken.
+ * Login EXCLUSIVO do cliente (casal) — apenas email, sem palavra-passe.
+ * O administrador entra em /admin (AdminLoginPage). O convidado não tem
+ * conta: acede por token em /convite/:eventSlug/:guestToken.
  */
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -18,41 +17,32 @@ export const LoginPage: React.FC = () => {
     (location.state as { from?: string } | null)?.from ||
     (new URLSearchParams(location.search).get('next') ?? '');
 
-  const [mode, setMode] = React.useState<'cliente' | 'admin'>('cliente');
   const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
 
-  const redirectFor = (role: 'admin' | 'cliente', fallback: string) => {
-    const target = from && from !== fallback ? from : fallback;
-    const allowed =
-      (role === 'admin' && target.startsWith('/admin')) ||
-      (role === 'cliente' && target.startsWith('/cliente'));
-    navigate(allowed ? target : fallback, { replace: true });
+  const redirectAfter = () => {
+    navigate(from.startsWith('/cliente') ? from : '/cliente', { replace: true });
   };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const result = login(email, mode === 'admin' ? password : undefined);
+    const result = login(email);
     if (!result.ok) {
       setError(result.error || 'Falha no início de sessão.');
       return;
     }
-    redirectFor(mode, mode === 'admin' ? '/admin' : '/cliente');
+    redirectAfter();
   };
 
-  const quickLogin = (quickMode: 'cliente' | 'admin') => {
+  const quickLogin = () => {
     setError('');
-    const result =
-      quickMode === 'admin'
-        ? login('admin@auranupcial.com', 'admin123')
-        : login('mariana.pedro@auranupcial.com');
+    const result = login('mariana.pedro@auranupcial.com');
     if (!result.ok) {
       setError(result.error || 'Falha no início de sessão.');
       return;
     }
-    redirectFor(quickMode === 'admin' ? 'admin' : 'cliente', quickMode === 'admin' ? '/admin' : '/cliente');
+    redirectAfter();
   };
 
   return (
@@ -63,43 +53,6 @@ export const LoginPage: React.FC = () => {
         <p className="mt-3 text-sm text-stone-600 font-sans">
           Cliente entra só com o email. Os convidados não precisam de conta — usam o link do convite.
         </p>
-      </div>
-
-      {/* Selector de ambiente */}
-      <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto mb-8">
-        <button
-          onClick={() => setMode('cliente')}
-          className={`text-left p-5 rounded-xs border transition-colors cursor-pointer ${
-            mode === 'cliente'
-              ? 'border-[#5E6B56] bg-white shadow-md'
-              : 'border-stone-200 bg-[#FAF7F2] hover:border-stone-300'
-          }`}
-        >
-          <HeartHandshake
-            className={`w-5 h-5 mb-2 ${mode === 'cliente' ? 'text-[#5E6B56]' : 'text-stone-400'}`}
-          />
-          <p className="font-serif text-lg text-stone-900">Sou cliente</p>
-          <p className="text-xs text-stone-500 font-sans mt-0.5">
-            Gerir o meu convite e convidados — só email
-          </p>
-        </button>
-
-        <button
-          onClick={() => setMode('admin')}
-          className={`text-left p-5 rounded-xs border transition-colors cursor-pointer ${
-            mode === 'admin'
-              ? 'border-slate-700 bg-white shadow-md'
-              : 'border-stone-200 bg-[#FAF7F2] hover:border-stone-300'
-          }`}
-        >
-          <ShieldCheck
-            className={`w-5 h-5 mb-2 ${mode === 'admin' ? 'text-slate-700' : 'text-stone-400'}`}
-          />
-          <p className="font-serif text-lg text-stone-900">Sou administrador</p>
-          <p className="text-xs text-stone-500 font-sans mt-0.5">
-            Gestão da plataforma Aura Nupcial
-          </p>
-        </button>
       </div>
 
       <div className="max-w-md mx-auto bg-white border border-stone-200 rounded-xs p-6 sm:p-7 shadow-xs">
@@ -113,25 +66,10 @@ export const LoginPage: React.FC = () => {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={mode === 'admin' ? 'email de administração' : 'o.seu.email@exemplo.com'}
+              placeholder="o.seu.email@exemplo.com"
               className="w-full py-2.5 px-3 text-sm font-sans bg-[#FAF7F2] border border-stone-300 rounded-xs focus:outline-none focus:border-[#5E6B56]"
             />
           </div>
-          {mode === 'admin' && (
-            <div>
-              <label className="block text-[11px] uppercase tracking-wider font-sans font-medium text-stone-700 mb-1">
-                Palavra-passe
-              </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full py-2.5 px-3 text-sm font-sans bg-[#FAF7F2] border border-stone-300 rounded-xs focus:outline-none focus:border-[#5E6B56]"
-              />
-            </div>
-          )}
 
           {error && (
             <p className="text-xs text-red-600 font-sans bg-red-50 border border-red-200 px-3 py-2 rounded-xs">
@@ -147,41 +85,28 @@ export const LoginPage: React.FC = () => {
             Entrar
           </button>
 
-          {mode === 'cliente' && (
-            <p className="text-[11px] text-stone-500 font-sans text-center leading-relaxed">
-              Ainda não tem conta?{' '}
-              <Link to="/criar" className="text-[#5E6B56] hover:underline">
-                Criar uma conta
-              </Link>
-            </p>
-          )}
+          <p className="text-[11px] text-stone-500 font-sans text-center leading-relaxed">
+            Ainda não tem conta?{' '}
+            <Link to="/criar" className="text-[#5E6B56] hover:underline">
+              Criar uma conta
+            </Link>
+          </p>
         </form>
 
-        {/* Acesso rápido de demonstração — apenas em desenvolvimento.
-            Nunca aparece em produção (as credenciais de admin sairiam no bundle). */}
+        {/* Acesso rápido de demonstração — apenas em desenvolvimento. */}
         {import.meta.env.DEV && (
           <div className="mt-5 pt-5 border-t border-stone-200">
             <p className="text-[10px] uppercase tracking-[0.25em] text-stone-400 text-center mb-3">
               Acesso rápido de demonstração
             </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => quickLogin('cliente')}
-                className="px-3 py-2.5 text-[11px] font-sans font-medium text-stone-700 bg-[#FAF7F2] border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors cursor-pointer"
-              >
-                Entrar como cliente
-              </button>
-              <button
-                onClick={() => quickLogin('admin')}
-                className="px-3 py-2.5 text-[11px] font-sans font-medium text-slate-700 bg-slate-100 border border-slate-300 hover:bg-slate-200 rounded-xs transition-colors cursor-pointer"
-              >
-                Entrar como admin
-              </button>
-            </div>
+            <button
+              onClick={quickLogin}
+              className="w-full px-3 py-2.5 text-[11px] font-sans font-medium text-stone-700 bg-[#FAF7F2] border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors cursor-pointer"
+            >
+              Entrar como cliente
+            </button>
             <p className="text-[11px] text-stone-500 font-sans mt-3 text-center leading-relaxed">
               Cliente: mariana.pedro@auranupcial.com (sem palavra-passe)
-              <br />
-              Admin: admin@auranupcial.com / admin123
             </p>
           </div>
         )}
