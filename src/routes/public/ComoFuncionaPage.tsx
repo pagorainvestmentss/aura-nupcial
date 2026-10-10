@@ -13,7 +13,7 @@ const STEPS = [
   {
     n: '02',
     title: 'Escolha o pacote',
-    text: 'Essential (até 80 convidados) ou Pro (ilimitados, com QR Code e música). O pagamento é único e confirmado pela nossa equipa.'
+    text: 'Starter (até 30 convidados), Pro (até 100, com QR Code e música) ou Premium (tudo ilimitado). O pagamento é único e confirmado pela nossa equipa.'
   },
   {
     n: '03',

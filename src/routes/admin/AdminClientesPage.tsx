@@ -4,6 +4,7 @@ import { Plus, Pencil, Ban, CheckCircle2, CalendarDays, Search } from 'lucide-re
 import { WeddingStorageService } from '../../services/weddingStorage';
 import { getOccasion, eventNames, fallbackNames } from '../../data/occasions';
 import { Couple, PlanId } from '../../types/wedding';
+import { PLAN_LABEL } from '../../data/site';
 
 /**
  * CLIENTES (admin) — criar, editar, visualizar, suspender, activar, consultar eventos.
@@ -128,7 +129,7 @@ export const AdminClientesPage: React.FC = () => {
                     {c.status === 'active' ? 'Activo' : 'Suspenso'}
                   </span>
                   <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border bg-slate-50 text-slate-500 border-slate-200">
-                    {c.plan}
+                    {PLAN_LABEL[c.plan]}
                   </span>
                 </div>
                 <p className="text-sm text-slate-500 mt-0.5">
@@ -249,6 +250,7 @@ export const AdminClientesPage: React.FC = () => {
                   >
                     <option value="starter">Starter</option>
                     <option value="pro">Pro</option>
+                    <option value="premium">Premium</option>
                   </select>
                 </div>
                 <div>

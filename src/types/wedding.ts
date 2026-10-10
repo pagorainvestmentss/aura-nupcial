@@ -169,7 +169,7 @@ export interface Couple {
   createdAt: string;
   plan: PlanId;
   /**
-   * Upgrade pedido pelo cliente (ex.: Essential → Pro) que só passa a
+   * Upgrade pedido pelo cliente (ex.: Starter → Premium) que só passa a
    * `plan` quando a equipa confirma o pagamento. `null`/ausente = sem pedido.
    */
   pendingPlan?: PlanId | null;

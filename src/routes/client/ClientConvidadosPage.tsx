@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { WeddingStorageService, generateRandomToken } from '../../services/weddingStorage';
 import { Guest, SalutationType } from '../../types/wedding';
 import { useClientEvent } from './useClientEvent';
-import { canAddGuest, planGuestLimitLabel } from '../../data/site';
+import { canAddGuest, planGuestLimitLabel, PLAN_LABEL } from '../../data/site';
 
 const EMPTY_FORM = {
   name: '',
@@ -147,8 +147,10 @@ export const ClientConvidadosPage: React.FC = () => {
         <div className="bg-amber-50 border border-amber-200 rounded-xs px-4 py-3 flex flex-wrap items-center gap-3">
           <Users className="w-4 h-4 text-amber-600 shrink-0" />
           <p className="text-xs font-sans text-amber-800 flex-1 min-w-52">
-            Limite do plano {plan === 'pro' ? 'Pro' : 'Starter'} atingido (30 convidados).
-            Faça upgrade para o Pro e continue sem limites.
+            Limite do plano {PLAN_LABEL[plan]} atingido ({planGuestLimitLabel(plan).toLowerCase()}).
+            {plan === 'starter'
+              ? ' Faça upgrade para o plano Pro e continue com mais espaço.'
+              : ' Faça upgrade para o plano Premium e continue sem limites.'}
           </p>
           <Link
             to="/cliente"

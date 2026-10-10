@@ -1,6 +1,7 @@
 import { Couple, OccasionId, PlanId, WeddingEvent } from '../types/wedding';
 import { WeddingStorageService } from './weddingStorage';
 import { getOccasion } from '../data/occasions';
+import { hasProBenefits } from '../data/site';
 import { heroPhotoUrl, intimatePhotoUrl, ringsPhotoUrl } from '../data/defaultWeddingData';
 
 export interface CreateAccountParams {
@@ -88,8 +89,8 @@ export function createBlankEvent(coupleId: string, occasion: OccasionId, plan: P
     status: 'draft',
     rsvpDeadline: isoDaysFromNow(90),
     allowPlusOnes: true,
-    enableMusic: plan === 'pro',
-    enableQrValidation: plan === 'pro'
+    enableMusic: hasProBenefits(plan),
+    enableQrValidation: hasProBenefits(plan)
   };
 }
 
@@ -110,7 +111,7 @@ export function createAccount(params: CreateAccountParams): CreateAccountResult 
   );
   if (existing) return { ok: false, error: 'Já existe uma conta com este email. Faça login.' };
 
-  const plan: PlanId = params.plan === 'pro' ? 'pro' : 'starter';
+  const plan: PlanId = params.plan ?? 'starter';
   const coupleId = `couple-${Date.now().toString(36)}`;
 
   const couple: Couple = {

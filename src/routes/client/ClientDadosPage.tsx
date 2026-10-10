@@ -4,7 +4,7 @@ import { WeddingStorageService } from '../../services/weddingStorage';
 import { WeddingEvent } from '../../types/wedding';
 import { useClientEvent } from './useClientEvent';
 import { getOccasion } from '../../data/occasions';
-import { PLAN_GALLERY_LIMIT } from '../../data/site';
+import { PLAN_GALLERY_LIMIT, PLAN_LABEL, hasProBenefits } from '../../data/site';
 import { ACCEPTED_IMAGE_ATTR, processImage } from '../../utils/imageUpload';
 import { SmartImage } from '../../components/motion/SmartImage';
 
@@ -60,7 +60,7 @@ const [isProcessing, setIsProcessing] = React.useState(false);
 
   const def = getOccasion(form.occasion);
   const L = def.labels;
-  const isPro = couple?.plan === 'pro';
+  const isProOrPremium = hasProBenefits(couple?.plan ?? 'starter');
 
   const patch = (partial: Partial<WeddingEvent>) => setForm({ ...form, ...partial });
 
@@ -79,9 +79,7 @@ const [isProcessing, setIsProcessing] = React.useState(false);
     setForm({ ...form, dateIso: iso, dateDisplay: display || form.dateDisplay });
   };
 
-  const galleryLimit = isPro
-    ? PLAN_GALLERY_LIMIT.pro
-    : PLAN_GALLERY_LIMIT.starter;
+  const galleryLimit = PLAN_GALLERY_LIMIT[couple?.plan ?? 'starter'];
 
   /** Foto escolhida: redimensiona/comprime no navegador e coloca no formulário. */
   const readFileAsPhoto = async (file: File): Promise<string | null> => {
@@ -115,7 +113,7 @@ const [isProcessing, setIsProcessing] = React.useState(false);
     setIsProcessing(true);
 
     try {
-      const room = galleryLimit - form.gallery.length;
+      const room = galleryLimit === null ? files.length : galleryLimit - form.gallery.length;
       const next = [...form.gallery];
       for (const file of files.slice(0, room)) {
         const url = await readFileAsPhoto(file);
@@ -461,7 +459,8 @@ const [isProcessing, setIsProcessing] = React.useState(false);
 
           <div>
             <label className={labelCls}>
-              Galeria de fotos ({form.gallery.length}/{galleryLimit})
+              Galeria de fotos ({form.gallery.length}
+              {galleryLimit === null ? '' : `/${galleryLimit}`})
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
               {form.gallery.map((photo) => (
@@ -489,7 +488,7 @@ const [isProcessing, setIsProcessing] = React.useState(false);
                   />
                 </div>
               ))}
-              {form.gallery.length < galleryLimit && (
+              {(galleryLimit === null || form.gallery.length < galleryLimit) && (
                 <label
                   className={`aspect-square border border-dashed border-stone-300 rounded-xs flex flex-col items-center justify-center gap-1 text-stone-400 hover:border-[#5E6B56] hover:text-[#5E6B56] cursor-pointer transition-colors ${
                     isProcessing ? 'opacity-60 pointer-events-none' : ''
@@ -508,11 +507,11 @@ const [isProcessing, setIsProcessing] = React.useState(false);
                 </label>
               )}
             </div>
-            {form.gallery.length >= galleryLimit && (
+            {galleryLimit !== null && form.gallery.length >= galleryLimit && (
               <p className={hintCls}>
-                {isPro
-                  ? `Limite de ${galleryLimit} fotos do plano Pro atingido.`
-                  : `O plano Essencial inclui ${galleryLimit} fotos — faça upgrade para acrescentar mais.`}
+                {isProOrPremium
+                  ? `Limite de ${galleryLimit} fotos do plano ${PLAN_LABEL[couple?.plan ?? 'starter']} atingido.`
+                  : `O plano Starter inclui ${galleryLimit} fotos — faça upgrade para acrescentar mais.`}
               </p>
             )}
           </div>
@@ -549,17 +548,17 @@ const [isProcessing, setIsProcessing] = React.useState(false);
             ).map(([key, label]) => (
               <label
                 key={key}
-                className={`flex items-center gap-3 ${isPro ? 'cursor-pointer' : 'opacity-60'}`}
+                className={`flex items-center gap-3 ${isProOrPremium ? 'cursor-pointer' : 'opacity-60'}`}
               >
                 <input
                   type="checkbox"
                   checked={form[key]}
-                  disabled={!isPro}
+                  disabled={!isProOrPremium}
                   onChange={(e) => patch({ [key]: e.target.checked } as Partial<WeddingEvent>)}
                   className="w-4 h-4 accent-[#5E6B56]"
                 />
                 <span className="text-sm text-stone-700 font-sans">{label}</span>
-                {!isPro && (
+                {!isProOrPremium && (
                   <span className="text-[10px] uppercase tracking-wider text-stone-400 font-sans">
                     Plano Pro
                   </span>
@@ -567,7 +566,7 @@ const [isProcessing, setIsProcessing] = React.useState(false);
               </label>
             ))}
           </div>
-          {!isPro && (
+          {!isProOrPremium && (
             <p className="flex items-start gap-2 text-[11px] text-stone-500 font-sans">
               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
               Música e check-in por QR incluem-se no plano Pro — pode activá-los no seu

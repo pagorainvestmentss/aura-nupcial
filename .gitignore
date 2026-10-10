@@ -12,3 +12,4 @@ playwright-report/
 vite-dev.err
 ocasiao
 .vercel/
+.vercel

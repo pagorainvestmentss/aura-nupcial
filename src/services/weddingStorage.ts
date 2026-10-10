@@ -1,4 +1,5 @@
 import { WeddingEvent, Guest, Couple, RsvpStatus, QrStatus, PaymentStatus, ClientStatus, PlanId } from '../types/wedding';
+import { isUpgrade } from '../data/site';
 import { SEED_COUPLES, SEED_EVENTS, SEED_GUESTS, heroPhotoUrl, intimatePhotoUrl, ringsPhotoUrl } from '../data/defaultWeddingData';
 import { paletteForTemplate } from '../data/templates';
 
@@ -465,24 +466,24 @@ export class WeddingStorageService {
 
   /**
    * Pedido de mudança de plano pelo cliente.
-   * - Upgrade (→ Pro): NÃO altera `plan` — fica `pendingPlan` até a equipa
+   * - Upgrade (rank maior): NÃO altera `plan` — fica `pendingPlan` até a equipa
    *   confirmar o pagamento (activação em `setPaymentStatus('paid')`).
-   * - Downgrade (→ Essential): aplicado de imediato (só retira benefícios).
+   * - Downgrade (rank menor): aplicado de imediato (só retira benefícios).
    */
   public static requestPlanChange(coupleId: string, plan: PlanId): void {
     const couple = this.getCoupleById(coupleId);
     if (!couple) return;
 
-    const upgrade = couple.plan === 'starter' && plan === 'pro';
+    const upgrade = isUpgrade(couple.plan, plan);
     if (upgrade) {
-      if (couple.pendingPlan === 'pro') return;
-      couple.pendingPlan = 'pro';
+      if (couple.pendingPlan === plan) return;
+      couple.pendingPlan = plan;
       this.saveCouple(couple);
       return;
     }
 
     // Downgrade ou cancelamento de um pedido pendente.
-    couple.plan = plan === 'pro' ? 'pro' : 'starter';
+    couple.plan = plan;
     couple.pendingPlan = null;
     this.saveCouple(couple);
   }
