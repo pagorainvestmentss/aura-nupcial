@@ -41,6 +41,6 @@ jobs:
         if: steps.token.outputs.existe == 'true'
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: team_zODbf1ZlkzgzOfuk33ASR8xC
-          VERCEL_PROJECT_ID: prj_4S4nyRFI8GaIEMC4ihd6XRA7L3Lz
+          VERCEL_ORG_ID: team_JSLB7pDoEDQKqz3cXYTxL4Vk
+          VERCEL_PROJECT_ID: prj_dAT7TW5XZRZuH417NrFLV2d7OlXO
         run: npx --yes vercel@54.21.1 deploy --prod --yes
