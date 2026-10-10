@@ -66,8 +66,14 @@ const sessaoCliente: AuthSession = {
 };
 
 describe('RequireAuth — guard por role (espelho de RLS)', () => {
-  it('sem sessão → redirect para /login', () => {
+  it('sem sessão em rota admin → mostra o login de admin (em /admin)', () => {
     renderRota('/admin-protegido', null);
+    expect(screen.getByText('Administração Aura Nupcial')).toBeInTheDocument();
+    expect(screen.queryByText('Sou cliente')).not.toBeInTheDocument();
+  });
+
+  it('sem sessão em rota cliente → redirect para /login', () => {
+    renderRota('/cliente-protegido', null);
     expect(screen.getByText('pagina-login')).toBeInTheDocument();
   });
 
