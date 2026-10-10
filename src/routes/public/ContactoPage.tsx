@@ -105,8 +105,9 @@ export const ContactoPage: React.FC = () => {
                     Pacote de interesse
                   </label>
                   <select className="w-full py-2.5 px-3 text-sm font-sans bg-[#FAF7F2] border border-stone-300 rounded-xs focus:outline-none focus:border-[#5E6B56]">
-                    <option>Essential</option>
+                    <option>Starter</option>
                     <option>Pro</option>
+                    <option>Premium</option>
                     <option>À medida</option>
                   </select>
                 </div>

@@ -103,7 +103,7 @@ describe('casais', () => {
       email: 'teste@exemplo.com',
       phone: '900',
       createdAt: '2026-01-01',
-      plan: 'essential' as const,
+      plan: 'starter' as const,
       activeEventId: '',
       status: 'active' as const,
       paymentStatus: 'pending' as const,
@@ -392,11 +392,11 @@ describe('definições da plataforma', () => {
 });
 
 describe('planos (requestPlanChange + pagamento)', () => {
-  it('upgrade Essential → Pro fica pendente; plan não muda antes do pagamento', () => {
+  it('upgrade Starter → Pro fica pendente; plan não muda antes do pagamento', () => {
     WeddingStorageService.requestPlanChange('couple-sofia-andre', 'pro');
 
     const c = WeddingStorageService.getCoupleById('couple-sofia-andre')!;
-    expect(c.plan).toBe('essential');
+    expect(c.plan).toBe('starter');
     expect(c.pendingPlan).toBe('pro');
   });
 
@@ -405,7 +405,7 @@ describe('planos (requestPlanChange + pagamento)', () => {
     WeddingStorageService.requestPlanChange('couple-sofia-andre', 'pro');
 
     const c = WeddingStorageService.getCoupleById('couple-sofia-andre')!;
-    expect(c.plan).toBe('essential');
+    expect(c.plan).toBe('starter');
     expect(c.pendingPlan).toBe('pro');
   });
 
@@ -424,15 +424,41 @@ describe('planos (requestPlanChange + pagamento)', () => {
 
     const c = WeddingStorageService.getCoupleById('couple-joana-miguel')!;
     expect(c.paymentStatus).toBe('paid');
-    expect(c.plan).toBe('essential');
+    expect(c.plan).toBe('starter');
     expect(c.pendingPlan).toBeFalsy();
   });
 
-  it('downgrade Pro → Essential é imediato e limpa pedidos pendentes', () => {
-    WeddingStorageService.requestPlanChange('couple-mariana-pedro', 'essential');
+  it('downgrade Pro → Starter é imediato e limpa pedidos pendentes', () => {
+    WeddingStorageService.requestPlanChange('couple-mariana-pedro', 'starter');
 
     const c = WeddingStorageService.getCoupleById('couple-mariana-pedro')!;
-    expect(c.plan).toBe('essential');
+    expect(c.plan).toBe('starter');
+    expect(c.pendingPlan).toBeFalsy();
+  });
+
+  it('upgrade Starter → Premium fica pendente e activa com pagamento', () => {
+    WeddingStorageService.requestPlanChange('couple-sofia-andre', 'premium');
+
+    let c = WeddingStorageService.getCoupleById('couple-sofia-andre')!;
+    expect(c.plan).toBe('starter');
+    expect(c.pendingPlan).toBe('premium');
+
+    WeddingStorageService.setPaymentStatus('couple-sofia-andre', 'paid');
+
+    c = WeddingStorageService.getCoupleById('couple-sofia-andre')!;
+    expect(c.plan).toBe('premium');
+    expect(c.pendingPlan).toBeNull();
+  });
+
+  it('downgrade Premium → Starter é imediato', () => {
+    WeddingStorageService.requestPlanChange('couple-mariana-pedro', 'premium');
+    WeddingStorageService.setPaymentStatus('couple-mariana-pedro', 'paid');
+    expect(WeddingStorageService.getCoupleById('couple-mariana-pedro')!.plan).toBe('premium');
+
+    WeddingStorageService.requestPlanChange('couple-mariana-pedro', 'starter');
+
+    const c = WeddingStorageService.getCoupleById('couple-mariana-pedro')!;
+    expect(c.plan).toBe('starter');
     expect(c.pendingPlan).toBeFalsy();
   });
 });

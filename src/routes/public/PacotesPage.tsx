@@ -69,7 +69,7 @@ export const PacotesPage: React.FC = () => {
         </p>
       </div>
 
-      <Reveal stagger className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+      <Reveal stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {PLANS.map((p) => (
           <motion.div
             key={p.name}

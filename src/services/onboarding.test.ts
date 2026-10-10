@@ -40,7 +40,7 @@ describe('createAccount', () => {
 
     expect(result.ok).toBe(true);
     const { couple, event } = result;
-    expect(couple!.plan).toBe('essential'); // por omissão
+    expect(couple!.plan).toBe('starter'); // por omissão
     expect(couple!.paymentStatus).toBe('pending');
     expect(couple!.status).toBe('active');
     expect(couple!.activeEventId).toBe(event!.id);
@@ -53,16 +53,21 @@ describe('createAccount', () => {
     expect(WeddingStorageService.getEventById(event!.id)?.id).toBe(event!.id);
   });
 
-  it('plano pro activa música e QR; essential mantém desactivados', () => {
+  it('plano pro/premium activam música e QR; starter mantém desactivados', () => {
     const pro = createAccount({ ...params, email: 'pro@exemplo.com', plan: 'pro' });
     expect(pro.couple!.plan).toBe('pro');
     expect(pro.event!.enableMusic).toBe(true);
     expect(pro.event!.enableQrValidation).toBe(true);
 
-    const ess = createAccount({ ...params, email: 'essencial@exemplo.com', plan: 'essential' });
-    expect(ess.couple!.plan).toBe('essential');
-    expect(ess.event!.enableMusic).toBe(false);
-    expect(ess.event!.enableQrValidation).toBe(false);
+    const premium = createAccount({ ...params, email: 'premium@exemplo.com', plan: 'premium' });
+    expect(premium.couple!.plan).toBe('premium');
+    expect(premium.event!.enableMusic).toBe(true);
+    expect(premium.event!.enableQrValidation).toBe(true);
+
+    const starter = createAccount({ ...params, email: 'starter@exemplo.com', plan: 'starter' });
+    expect(starter.couple!.plan).toBe('starter');
+    expect(starter.event!.enableMusic).toBe(false);
+    expect(starter.event!.enableQrValidation).toBe(false);
   });
 
   it('slug duplicado recebe sufixo numérico (nunca sobrescreve)', () => {
@@ -78,7 +83,7 @@ describe('createAccount', () => {
 
 describe('createBlankEvent', () => {
   it('cria evento vazio (sem conteúdo demo) com prazo de RSVP a 90 dias', () => {
-    const event = createBlankEvent('couple-x', 'noivado', 'essential', 'Fulano & Beltrana');
+    const event = createBlankEvent('couple-x', 'noivado', 'starter', 'Fulano & Beltrana');
 
     expect(event.occasion).toBe('noivado');
     expect(event.gallery).toEqual([]);

@@ -16,7 +16,7 @@ import {
 import { useClientEvent } from './useClientEvent';
 import { WeddingStorageService } from '../../services/weddingStorage';
 import { eventNames, getOccasion } from '../../data/occasions';
-import { planGuestLimitLabel } from '../../data/site';
+import { planGuestLimitLabel, PLAN_LABEL, PLAN_GUEST_LIMIT, isUpgrade } from '../../data/site';
 import { PlanId } from '../../types/wedding';
 import { Reveal } from '../../components/motion/Reveal';
 
@@ -36,12 +36,12 @@ export const ClientVisaoGeralPage: React.FC = () => {
 
   const switchPlan = (plan: PlanId) => {
     if (!couple) return;
-    const upgrade = couple.plan === 'starter' && plan === 'pro' && couple.pendingPlan !== 'pro';
-    const downgrade = couple.plan === 'pro' && plan === 'starter';
-    if (!upgrade && !downgrade) return;
+    const upgrade = isUpgrade(couple.plan, plan) && couple.pendingPlan !== plan;
+    const sameRankOrHigher = plan === couple.plan || isUpgrade(plan, couple.plan);
+    if (!upgrade && sameRankOrHigher) return;
     const msg = upgrade
-      ? 'Pedir o upgrade para o plano Pro (convidados ilimitados)? O pagamento é confirmado pela equipa — o plano só muda depois de aprovado.'
-      : 'Mudar para o plano Essential (até 80 convidados)?';
+      ? `Pedir o upgrade para o plano ${PLAN_LABEL[plan]} (${planGuestLimitLabel(plan)})? O pagamento é confirmado pela equipa — o plano só muda depois de aprovado.`
+      : `Mudar para o plano ${PLAN_LABEL[plan]} (${planGuestLimitLabel(plan)})?`;
     if (!confirm(msg)) return;
     WeddingStorageService.requestPlanChange(couple.id, plan);
     refresh();
@@ -267,25 +267,19 @@ export const ClientVisaoGeralPage: React.FC = () => {
           </span>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-3">
-          {(['starter', 'pro'] as PlanId[]).map((p) => {
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {(['starter', 'pro', 'premium'] as PlanId[]).map((p) => {
             const active = couple.plan === p;
             const requested = couple.pendingPlan === p && !active;
             return (
               <button
                 key={p}
+                type="button"
                 onClick={() => switchPlan(p)}
-                className={`text-left p-4 rounded-xs border transition-colors cursor-pointer ${
-                  active
-                    ? 'border-[#5E6B56] bg-white shadow-md'
-                    : 'border-stone-200 bg-[#FAF7F2] hover:border-stone-300'
-                }`}
+                className={`text-left p-4 rounded-xs border transition-colors cursor-pointer ${active ? 'border-[#5E6B56] bg-white shadow-md' : 'border-stone-200 bg-[#FAF7F2] hover:border-stone-300'}`}
               >
                 <div className="flex items-center justify-between">
-                  <p className="font-serif text-lg text-stone-900">
-                    {p === 'starter' ? 'Starter' : 'Pro'}
-                  </p>
-                  </p>
+                  <p className="font-serif text-lg text-stone-900">{PLAN_LABEL[p]}</p>
                   {active && (
                     <span className="text-[10px] uppercase tracking-widest text-[#5E6B56] font-semibold">
                       Actual
@@ -303,7 +297,9 @@ export const ClientVisaoGeralPage: React.FC = () => {
                 <p className="text-[11px] text-stone-400 font-sans mt-1">
                   {p === 'starter'
                     ? '45.000 Kz · RSVP e envio por WhatsApp'
-                    : '120.000 Kz · + QR Code, música e relatórios'}
+                    : p === 'pro'
+                      ? '120.000 Kz · + QR Code, música e relatórios'
+                      : '200.000 Kz · + ilimitado e tudo desbloqueado'}
                 </p>
               </button>
             );
@@ -311,8 +307,8 @@ export const ClientVisaoGeralPage: React.FC = () => {
         </div>
         {couple.pendingPlan && couple.pendingPlan !== couple.plan && (
           <p className="text-[11px] text-amber-700 font-sans mt-3 leading-relaxed">
-            Upgrade a Pro pedido — assim que a equipa confirmar o pagamento, o plano é
-            actualizado e os benefícios são desbloqueados.
+            Upgrade para o plano {PLAN_LABEL[couple.pendingPlan]} pedido — assim que a equipa
+            confirmar o pagamento, o plano é actualizado e os benefícios são desbloqueados.
           </p>
         )}
         {!paid && (
@@ -342,7 +338,10 @@ export const ClientVisaoGeralPage: React.FC = () => {
           </div>
           <p className="text-3xl font-serif text-stone-900 mt-2">{guests.length}</p>
           <p className="text-[11px] text-stone-400 font-sans mt-1">
-            {couple.plan === 'starter' ? 'limite 30 · plano Starter' : 'ilimitados · plano Pro'}
+            {PLAN_GUEST_LIMIT[couple.plan] === null
+              ? 'ilimitados'
+              : `limite ${PLAN_GUEST_LIMIT[couple.plan]}`}{' '}
+            · plano {PLAN_LABEL[couple.plan]}
           </p>
         </div>
         <div className="bg-white border border-stone-200 rounded-xs p-5">

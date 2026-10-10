@@ -1,9 +1,8 @@
 import React from 'react';
 import { CreditCard, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { WeddingStorageService } from '../../services/weddingStorage';
-import { Couple, PaymentStatus, PlanId } from '../../types/wedding';
-
-const PLAN_LABEL: Record<PlanId, string> = { starter: 'Starter', pro: 'Pro' };
+import { Couple, PaymentStatus } from '../../types/wedding';
+import { PLAN_LABEL } from '../../data/site';
 
 const PAYMENT_META: Record<PaymentStatus, { label: string; tone: string; icon: React.ElementType }> = {
   paid: { label: 'Pago', tone: 'text-emerald-700 bg-emerald-50 border-emerald-200', icon: CheckCircle2 },

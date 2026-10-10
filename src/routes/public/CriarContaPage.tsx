@@ -5,6 +5,7 @@ import { useAuth } from '../../app/AuthContext';
 import { OccasionPicker } from '../../components/public/OccasionPicker';
 import { OccasionId, PlanId } from '../../types/wedding';
 import { getOccasion } from '../../data/occasions';
+import { PLAN_LABEL, planGuestLimitLabel } from '../../data/site';
 
 /**
  * CRIAR CONTA — passo do funil depois da escolha da ocasião.
@@ -134,7 +135,7 @@ export const CriarContaPage: React.FC = () => {
               <label className="block text-[11px] uppercase tracking-wider font-sans font-medium text-stone-700 mb-2">
                 Pacote (pode mudar depois no painel)
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {(['starter', 'pro', 'premium'] as PlanId[]).map((p) => (
                   <button
                     key={p}
@@ -146,11 +147,9 @@ export const CriarContaPage: React.FC = () => {
                         : 'border-stone-200 bg-[#FAF7F2] hover:border-stone-300'
                     }`}
                   >
-                    <p className="font-serif text-base text-stone-900">
-                      {p === 'starter' ? 'Starter' : p === 'pro' ? 'Pro' : 'Premium'}
-                    </p>
+                    <p className="font-serif text-base text-stone-900">{PLAN_LABEL[p]}</p>
                     <p className="text-[11px] font-sans text-stone-500 mt-0.5">
-                      {p === 'starter' ? 'Até 30 convidados' : p === 'pro' ? 'Até 100 convidados' : 'Ilimitados'}
+                      {planGuestLimitLabel(p)}
                     </p>
                   </button>
                 ))}
