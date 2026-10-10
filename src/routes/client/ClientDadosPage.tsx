@@ -4,6 +4,8 @@ import { WeddingStorageService } from '../../services/weddingStorage';
 import { WeddingEvent } from '../../types/wedding';
 import { useClientEvent } from './useClientEvent';
 import { getOccasion } from '../../data/occasions';
+import { getVersePresets, applyVersePreset, VersePreset } from '../../data/versePresets';
+import { VersePresetGrid } from '../../components/client/VersePresetGrid';
 import { PLAN_GALLERY_LIMIT, PLAN_LABEL, hasProBenefits } from '../../data/site';
 import { ACCEPTED_IMAGE_ATTR, processImage } from '../../utils/imageUpload';
 import { SmartImage } from '../../components/motion/SmartImage';
@@ -262,7 +264,12 @@ const [isProcessing, setIsProcessing] = React.useState(false);
 
         <section className="bg-white border border-stone-200 rounded-xs p-5 sm:p-6 space-y-4">
           <h2 className="text-sm font-semibold text-stone-800 font-sans">{L.verseSection}</h2>
-          <div>
+          <VersePresetGrid
+            presets={getVersePresets(form.occasion)}
+            form={form}
+            onPick={(preset: VersePreset) => setForm(applyVersePreset(form, preset))}
+          />
+          <div className="border-t border-stone-100 pt-4">
             <label className={labelCls}>{L.verse}</label>
             <textarea
               value={form.verse.text}
