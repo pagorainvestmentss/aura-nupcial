@@ -27,16 +27,24 @@ export const CriarContaPage: React.FC = () => {
   const [email, setEmail] = React.useState('');
   const [whatsapp, setWhatsapp] = React.useState('');
   const [error, setError] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [confirmEmail, setConfirmEmail] = React.useState(false);
 
   const def = occasion ? getOccasion(occasion) : null;
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!occasion) return;
-    const result = register({ name, email, whatsapp, occasion, plan });
+    setBusy(true);
+    const result = await register({ name, email, whatsapp, occasion, plan });
+    setBusy(false);
     if (!result.ok) {
       setError(result.error || 'Não foi possível criar a conta.');
+      return;
+    }
+    if (result.pendingConfirmation) {
+      setConfirmEmail(true);
       return;
     }
     navigate('/cliente', { replace: true });
@@ -44,6 +52,33 @@ export const CriarContaPage: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-5 sm:px-8 py-14 sm:py-20">
+      {confirmEmail ? (
+        <div className="max-w-lg mx-auto text-center bg-white border border-stone-200 rounded-xs p-8 shadow-xs">
+          <Sparkles className="w-8 h-8 text-[#5E6B56] mx-auto mb-4" />
+          <h2 className="font-serif text-3xl text-stone-900 mb-3">Quase lá!</h2>
+          <p className="text-sm text-stone-600 font-sans leading-relaxed">
+            Enviámos um email de confirmação para{' '}
+            <span className="font-medium text-stone-900">{email.trim()}</span>. Abra a mensagem e
+            clique no link para activar a sua conta. Depois,{' '}
+            <Link to="/login" className="text-[#5E6B56] hover:underline">
+              entre na plataforma
+            </Link>{' '}
+            com o seu email e a palavra-passe (o número de WhatsApp que indicou).
+          </p>
+          <p className="text-[11px] text-stone-500 font-sans mt-4">
+            Não encontrou o email? Verifique a pasta de spam ou{' '}
+            <button
+              type="button"
+              onClick={() => setConfirmEmail(false)}
+              className="text-[#5E6B56] hover:underline cursor-pointer"
+            >
+              tente novamente
+            </button>
+            .
+          </p>
+        </div>
+      ) : (
+      <div>
       <div className="text-center mb-10">
         <p className="text-[11px] uppercase tracking-[0.3em] text-stone-400 mb-3">
           {step === 'pick' ? 'Passo 1 de 2' : 'Passo 2 de 2'}
@@ -119,7 +154,7 @@ export const CriarContaPage: React.FC = () => {
 
             <div>
               <label className="block text-[11px] uppercase tracking-wider font-sans font-medium text-stone-700 mb-1">
-                WhatsApp
+                WhatsApp <span className="normal-case text-stone-400">(será a sua palavra-passe)</span>
               </label>
               <input
                 type="tel"
@@ -170,21 +205,24 @@ export const CriarContaPage: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors cursor-pointer"
+              disabled={busy}
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors cursor-pointer disabled:opacity-60"
             >
               <Sparkles className="w-4 h-4" />
-              Criar conta e começar
-              <ArrowRight className="w-4 h-4" />
+              {busy ? 'A criar a conta…' : 'Criar conta e começar'}
+              {!busy && <ArrowRight className="w-4 h-4" />}
             </button>
 
             <p className="text-[11px] text-stone-500 font-sans text-center leading-relaxed">
-              Sem palavra-passe — entra com o email. Já tem conta?{' '}
+              Vamos enviar um email para confirmar a sua conta. Já tem conta?{' '}
               <Link to="/login" className="text-[#5E6B56] hover:underline">
                 Entrar
               </Link>
             </p>
           </form>
         </div>
+      )}
+      </div>
       )}
     </div>
   );

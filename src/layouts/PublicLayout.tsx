@@ -207,9 +207,6 @@ export const PublicLayout: React.FC = () => {
             <a href={whatsappLink()} target="_blank" rel="noreferrer" className="hover:text-stone-900">
               WhatsApp {WHATSAPP_DISPLAY}
             </a>
-            <Link to="/convite/mariana-pedro/8Fk92KsP" className="hover:text-stone-900">
-              Ver convite de demonstração
-            </Link>
           </div>
         </div>
         <div className="border-t border-stone-200 py-4 text-center text-[10px] uppercase tracking-[0.25em] text-stone-400 font-sans">

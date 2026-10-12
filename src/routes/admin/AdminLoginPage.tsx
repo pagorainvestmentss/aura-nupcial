@@ -17,26 +17,19 @@ export const AdminLoginPage: React.FC = () => {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const result = login(email, password);
+    setBusy(true);
+    const result = await login(email, password);
+    setBusy(false);
     if (!result.ok) {
       setError(result.error || 'Falha no início de sessão.');
       return;
     }
     navigate(from.startsWith('/admin') ? from : '/admin', { replace: true });
-  };
-
-  const quickLogin = () => {
-    setError('');
-    const result = login('admin@auranupcial.com', 'admin123');
-    if (!result.ok) {
-      setError(result.error || 'Falha no início de sessão.');
-      return;
-    }
-    navigate('/admin', { replace: true });
   };
 
   return (
@@ -86,29 +79,13 @@ export const AdminLoginPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-slate-700 hover:bg-slate-600 rounded-xs transition-colors cursor-pointer"
+            disabled={busy}
+            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-slate-700 hover:bg-slate-600 rounded-xs transition-colors cursor-pointer disabled:opacity-60"
           >
             <LogIn className="w-4 h-4" />
-            Entrar
+            {busy ? 'A entrar…' : 'Entrar'}
           </button>
-
-          {/* Acesso rápido de demonstração — apenas em desenvolvimento. */}
-          {import.meta.env.DEV && (
-            <button
-              type="button"
-              onClick={quickLogin}
-              className="w-full px-3 py-2.5 text-[11px] font-sans font-medium text-slate-300 bg-slate-900 border border-slate-700 hover:bg-slate-700/50 rounded-xs transition-colors cursor-pointer"
-            >
-              Entrar como admin (demonstração)
-            </button>
-          )}
         </form>
-
-        {import.meta.env.DEV && (
-          <p className="text-center text-[11px] text-slate-500 font-sans mt-4">
-            Admin: admin@auranupcial.com / admin123
-          </p>
-        )}
       </div>
     </div>
   );

@@ -14,11 +14,11 @@ function renderAuth() {
 }
 
 describe('AuthContext — login', () => {
-  it('admin: password correcta cria sessão admin e guarda-a no armazenamento', () => {
+  it('admin: password correcta cria sessão admin e guarda-a no armazenamento', async () => {
     const { result } = renderAuth();
-    let res!: ReturnType<typeof result.current.login>;
-    act(() => {
-      res = result.current.login('admin@auranupcial.com', 'admin123');
+    let res!: Awaited<ReturnType<typeof result.current.login>>;
+    await act(async () => {
+      res = await result.current.login('admin@auranupcial.com', 'admin123');
     });
 
     expect(res.ok).toBe(true);
@@ -27,11 +27,11 @@ describe('AuthContext — login', () => {
     expect(localStorage.getItem(SESSION_KEY)).toContain('"role":"admin"');
   });
 
-  it('admin: password errada é rejeitada', () => {
+  it('admin: password errada é rejeitada', async () => {
     const { result } = renderAuth();
-    let res!: ReturnType<typeof result.current.login>;
-    act(() => {
-      res = result.current.login('admin@auranupcial.com', 'errada');
+    let res!: Awaited<ReturnType<typeof result.current.login>>;
+    await act(async () => {
+      res = await result.current.login('admin@auranupcial.com', 'errada');
     });
 
     expect(res.ok).toBe(false);
@@ -39,11 +39,11 @@ describe('AuthContext — login', () => {
     expect(result.current.session).toBeNull();
   });
 
-  it('cliente: login por email do seed cria sessão com coupleId', () => {
+  it('cliente: login por email do seed cria sessão com coupleId', async () => {
     const { result } = renderAuth();
-    let res!: ReturnType<typeof result.current.login>;
-    act(() => {
-      res = result.current.login('mariana.pedro@auranupcial.com');
+    let res!: Awaited<ReturnType<typeof result.current.login>>;
+    await act(async () => {
+      res = await result.current.login('mariana.pedro@auranupcial.com');
     });
 
     expect(res.ok).toBe(true);
@@ -51,23 +51,23 @@ describe('AuthContext — login', () => {
     expect(result.current.session?.coupleId).toBe('couple-mariana-pedro');
   });
 
-  it('cliente: email desconhecido é rejeitado', () => {
+  it('cliente: email desconhecido é rejeitado', async () => {
     const { result } = renderAuth();
-    let res!: ReturnType<typeof result.current.login>;
-    act(() => {
-      res = result.current.login('ninguem@exemplo.com');
+    let res!: Awaited<ReturnType<typeof result.current.login>>;
+    await act(async () => {
+      res = await result.current.login('ninguem@exemplo.com');
     });
 
     expect(res.ok).toBe(false);
     expect(result.current.session).toBeNull();
   });
 
-  it('cliente: conta suspensa não entra', () => {
+  it('cliente: conta suspensa não entra', async () => {
     WeddingStorageService.setClientStatus('couple-mariana-pedro', 'suspended');
     const { result } = renderAuth();
-    let res!: ReturnType<typeof result.current.login>;
-    act(() => {
-      res = result.current.login('mariana.pedro@auranupcial.com');
+    let res!: Awaited<ReturnType<typeof result.current.login>>;
+    await act(async () => {
+      res = await result.current.login('mariana.pedro@auranupcial.com');
     });
 
     expect(res.ok).toBe(false);
@@ -77,11 +77,11 @@ describe('AuthContext — login', () => {
 });
 
 describe('AuthContext — registo', () => {
-  it('registo válido cria conta, evento e sessão de cliente', () => {
+  it('registo válido cria conta, evento e sessão de cliente', async () => {
     const { result } = renderAuth();
-    let res!: ReturnType<typeof result.current.register>;
-    act(() => {
-      res = result.current.register({
+    let res!: Awaited<ReturnType<typeof result.current.register>>;
+    await act(async () => {
+      res = await result.current.register({
         name: 'Rita & Nuno',
         email: 'rita.nuno@exemplo.com',
         whatsapp: '911 222 333',
@@ -97,11 +97,11 @@ describe('AuthContext — registo', () => {
     ).toBe(true);
   });
 
-  it('registo com plano Pro honra o plano escolhido no casal criado', () => {
+  it('registo com plano Pro honra o plano escolhido no casal criado', async () => {
     const { result } = renderAuth();
-    let res!: ReturnType<typeof result.current.register>;
-    act(() => {
-      res = result.current.register({
+    let res!: Awaited<ReturnType<typeof result.current.register>>;
+    await act(async () => {
+      res = await result.current.register({
         name: 'Ana & Diogo',
         email: 'ana.diogo@exemplo.com',
         whatsapp: '922 333 444',
@@ -118,11 +118,11 @@ describe('AuthContext — registo', () => {
     expect(casal?.paymentStatus).toBe('pending');
   });
 
-  it('registo com email existente falha sem criar sessão', () => {
+  it('registo com email existente falha sem criar sessão', async () => {
     const { result } = renderAuth();
-    let res!: ReturnType<typeof result.current.register>;
-    act(() => {
-      res = result.current.register({
+    let res!: Awaited<ReturnType<typeof result.current.register>>;
+    await act(async () => {
+      res = await result.current.register({
         name: 'Outro Casal',
         email: 'mariana.pedro@auranupcial.com',
         whatsapp: '911 222 333',
@@ -147,10 +147,10 @@ describe('AuthContext — sessão e logout', () => {
     expect(result.current.session?.displayName).toBe('Guardado');
   });
 
-  it('logout limpa a sessão do estado e do armazenamento', () => {
+  it('logout limpa a sessão do estado e do armazenamento', async () => {
     const { result } = renderAuth();
-    act(() => {
-      result.current.login('admin@auranupcial.com', 'admin123');
+    await act(async () => {
+      await result.current.login('admin@auranupcial.com', 'admin123');
     });
     expect(result.current.session).not.toBeNull();
 

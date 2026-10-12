@@ -10,7 +10,8 @@ import {
   Clock,
   QrCode
 } from 'lucide-react';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
+import { Couple, Guest, WeddingEvent } from '../../types/wedding';
 import { Reveal } from '../../components/motion/Reveal';
 
 /**
@@ -18,9 +19,51 @@ import { Reveal } from '../../components/motion/Reveal';
  * Sistema administrativo: nada de layout de casamento aqui.
  */
 export const AdminDashboardPage: React.FC = () => {
-  const couples = WeddingStorageService.getCouples();
-  const events = WeddingStorageService.getEvents();
-  const guests = WeddingStorageService.getGuests();
+  const [couples, setCouples] = React.useState<Couple[]>([]);
+  const [events, setEvents] = React.useState<WeddingEvent[]>([]);
+  const [guests, setGuests] = React.useState<Guest[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [erro, setErro] = React.useState(false);
+
+  React.useEffect(() => {
+    let activo = true;
+    (async () => {
+      try {
+        const [c, e, g] = await Promise.all([
+          getRepo().getCouples(),
+          getRepo().getEvents(),
+          getRepo().getGuests()
+        ]);
+        if (!activo) return;
+        setCouples(c);
+        setEvents(e);
+        setGuests(g);
+      } catch {
+        if (activo) setErro(true);
+      } finally {
+        if (activo) setLoading(false);
+      }
+    })();
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div role="status" className="text-sm text-slate-500">
+        A carregar dados…
+      </div>
+    );
+  }
+
+  if (erro) {
+    return (
+      <div role="alert" className="text-sm text-red-600">
+        Não foi possível carregar os dados. Tente novamente mais tarde.
+      </div>
+    );
+  }
 
   const activeClients = couples.filter((c) => c.status === 'active').length;
   const activeEvents = events.filter((e) => e.status === 'active').length;

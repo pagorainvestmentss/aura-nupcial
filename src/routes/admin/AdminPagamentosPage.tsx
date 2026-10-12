@@ -1,6 +1,6 @@
 import React from 'react';
 import { CreditCard, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
 import { Couple, PaymentStatus } from '../../types/wedding';
 import { PLAN_LABEL } from '../../data/site';
 
@@ -14,19 +14,57 @@ const PAYMENT_META: Record<PaymentStatus, { label: string; tone: string; icon: R
  * PAGAMENTOS (admin) — estado financeiro por cliente.
  */
 export const AdminPagamentosPage: React.FC = () => {
-  const [couples, setCouples] = React.useState<Couple[]>(() => WeddingStorageService.getCouples());
+  const [couples, setCouples] = React.useState<Couple[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState<string | null>(null);
+  const [erro, setErro] = React.useState<string | null>(null);
 
-  const refresh = () => setCouples(WeddingStorageService.getCouples());
+  React.useEffect(() => {
+    let activo = true;
+    (async () => {
+      try {
+        const c = await getRepo().getCouples();
+        if (activo) setCouples(c);
+      } catch {
+        if (activo) setErro('Não foi possível carregar os pagamentos. Tente novamente mais tarde.');
+      } finally {
+        if (activo) setLoading(false);
+      }
+    })();
+    return () => {
+      activo = false;
+    };
+  }, []);
 
-  const setPayment = (couple: Couple, status: PaymentStatus) => {
-    setSaving(couple.id);
-    WeddingStorageService.setPaymentStatus(couple.id, status);
-    setTimeout(() => {
-      refresh();
-      setSaving(null);
-    }, 250);
+  const refresh = async () => {
+    try {
+      setCouples(await getRepo().getCouples());
+      setErro(null);
+    } catch {
+      setErro('Não foi possível actualizar a lista de clientes.');
+    }
   };
+
+  const setPayment = async (couple: Couple, status: PaymentStatus) => {
+    setSaving(couple.id);
+    setErro(null);
+    try {
+      await getRepo().setPaymentStatus(couple.id, status);
+      await refresh();
+    } catch {
+      setErro('Não foi possível actualizar o estado de pagamento.');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div role="status" className="text-sm text-slate-500">
+        A carregar dados…
+      </div>
+    );
+  }
 
   const totals = {
     paid: couples.filter((c) => c.paymentStatus === 'paid').length,
@@ -43,6 +81,12 @@ export const AdminPagamentosPage: React.FC = () => {
           confirmação do pagamento.
         </p>
       </div>
+
+      {erro && (
+        <p role="alert" className="text-xs text-red-600">
+          {erro}
+        </p>
+      )}
 
       <div className="grid sm:grid-cols-3 gap-4">
         <div className="bg-white border border-slate-200 rounded-sm p-4 flex items-center gap-3">
