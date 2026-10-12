@@ -80,10 +80,10 @@ export const ComoFuncionaPage: React.FC = () => {
               Criar convite
             </Link>
             <Link
-              to="/convite/mariana-pedro/8Fk92KsP"
+              to="/exemplos"
               className="press px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-stone-800 bg-white border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors"
             >
-              Abrir convite de demonstração
+              Ver exemplos
             </Link>
             <Link
               to="/pacotes"

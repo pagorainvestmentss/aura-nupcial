@@ -1,8 +1,9 @@
 import React from 'react';
 import { Search, QrCode, Copy, Check } from 'lucide-react';
 import QRCode from 'qrcode';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
 import { SmartImage } from '../../components/motion/SmartImage';
+import { Couple, Guest, WeddingEvent } from '../../types/wedding';
 
 /**
  * CONVIDADOS (admin) — vista global de todos os eventos, pesquisa, token e QR.
@@ -12,10 +13,35 @@ export const AdminConvidadosPage: React.FC = () => {
   const [eventFilter, setEventFilter] = React.useState('all');
   const [copied, setCopied] = React.useState<string | null>(null);
   const [showQr, setShowQr] = React.useState<{ name: string; url: string } | null>(null);
+  const [events, setEvents] = React.useState<WeddingEvent[]>([]);
+  const [couples, setCouples] = React.useState<Couple[]>([]);
+  const [guests, setGuests] = React.useState<Guest[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [erro, setErro] = React.useState<string | null>(null);
 
-  const events = WeddingStorageService.getEvents();
-  const couples = WeddingStorageService.getCouples();
-  const guests = WeddingStorageService.getGuests();
+  React.useEffect(() => {
+    let activo = true;
+    (async () => {
+      try {
+        const [e, c, g] = await Promise.all([
+          getRepo().getEvents(),
+          getRepo().getCouples(),
+          getRepo().getGuests()
+        ]);
+        if (!activo) return;
+        setEvents(e);
+        setCouples(c);
+        setGuests(g);
+      } catch {
+        if (activo) setErro('Não foi possível carregar os convidados. Tente novamente mais tarde.');
+      } finally {
+        if (activo) setLoading(false);
+      }
+    })();
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   const filtered = guests.filter((g) => {
     const ev = events.find((e) => e.id === g.eventId);
@@ -42,6 +68,14 @@ export const AdminConvidadosPage: React.FC = () => {
   const statusLabel = (s: string) =>
     s === 'confirmed' ? 'Confirmado' : s === 'declined' ? 'Recusou' : 'Pendente';
 
+  if (loading) {
+    return (
+      <div role="status" className="text-sm text-slate-500">
+        A carregar dados…
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -50,6 +84,12 @@ export const AdminConvidadosPage: React.FC = () => {
           {guests.length} convidados em {events.length} eventos.
         </p>
       </div>
+
+      {erro && (
+        <p role="alert" className="text-xs text-red-600">
+          {erro}
+        </p>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-sm">

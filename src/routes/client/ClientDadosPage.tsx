@@ -1,6 +1,6 @@
 import React from 'react';
 import { Save, Heart, Info, Image as ImageIcon, Plus, X, Loader2 } from 'lucide-react';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
 import { WeddingEvent } from '../../types/wedding';
 import { useClientEvent } from './useClientEvent';
 import { getOccasion } from '../../data/occasions';
@@ -40,19 +40,20 @@ function suggestMonogram(bride: string, groom: string): string {
  */
 export const ClientDadosPage: React.FC = () => {
   const [version, setVersion] = React.useState(0);
-  const { event, couple } = useClientEvent(version);
+  const { event, couple, loading } = useClientEvent(version);
   const [form, setForm] = React.useState<WeddingEvent | null>(event);
   const [saved, setSaved] = React.useState(false);
   const [photoError, setPhotoError] = React.useState<string | null>(null);
 const [isProcessing, setIsProcessing] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState(false);
   const monoTouched = React.useRef(false);
 
   React.useEffect(() => {
     if (event && !form) setForm(event);
   }, [event, form]);
 
-  if (!event || !form) {
+  if (loading || !event || !form) {
     return (
       <div className="bg-white border border-stone-200 rounded-xs p-8 text-center">
         <p className="text-sm text-stone-500 font-sans">A carregar os seus dados...</p>
@@ -145,21 +146,29 @@ const [isProcessing, setIsProcessing] = React.useState(false);
       gallery: form.gallery.map((p) => (p.id === id ? { ...p, caption } : p))
     });
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const guardado = WeddingStorageService.saveEvent(form);
-    if (!guardado) {
+    setBusy(true);
+    try {
+      const guardado = await getRepo().saveEvent(form);
+      if (!guardado) {
+        setSaved(false);
+        setSaveError(
+          'Não foi possível guardar — o armazenamento do navegador está cheio. Remova algumas fotos e tente de novo.'
+        );
+        return;
+      }
+      setPhotoError(null);
+      setSaveError(null);
+      setSaved(true);
+      setVersion((v) => v + 1);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
       setSaved(false);
-      setSaveError(
-        'Não foi possível guardar — o armazenamento do navegador está cheio. Remova algumas fotos e tente de novo.'
-      );
-      return;
+      setSaveError('Não foi possível guardar as alterações. Verifique a sua ligação e tente de novo.');
+    } finally {
+      setBusy(false);
     }
-    setPhotoError(null);
-    setSaveError(null);
-    setSaved(true);
-    setVersion((v) => v + 1);
-    setTimeout(() => setSaved(false), 3000);
   };
 
   const field =
@@ -585,10 +594,11 @@ const [isProcessing, setIsProcessing] = React.useState(false);
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            className="inline-flex items-center gap-2 px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors cursor-pointer"
+            disabled={busy}
+            className="inline-flex items-center gap-2 px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Save className="w-4 h-4" />
-            Guardar alterações
+            {busy ? 'A guardar…' : 'Guardar alterações'}
           </button>
           {saved && (
             <span className="text-xs text-emerald-700 font-sans">

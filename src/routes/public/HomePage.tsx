@@ -82,10 +82,10 @@ export const HomePage: React.FC = () => {
                 <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
               </Link>
               <Link
-                to="/convite/mariana-pedro/8Fk92KsP"
+                to="/exemplos"
                 className="press inline-flex items-center gap-2 px-7 py-3.5 text-xs uppercase tracking-[0.2em] font-semibold text-stone-800 bg-white border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors"
               >
-                Ver convite real
+                Ver exemplos
               </Link>
             </motion.div>
             <motion.ul variants={heroChild} className="mt-8 grid sm:grid-cols-2 gap-x-6 gap-y-2">

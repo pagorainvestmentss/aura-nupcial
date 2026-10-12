@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check, Palette } from 'lucide-react';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
 import { WeddingEvent } from '../../types/wedding';
 import { TemplateId, paletteForTemplate } from '../../data/templates';
 
@@ -42,15 +42,58 @@ const TEMPLATES: TemplateInfo[] = [
  * TEMPLATES (admin) — catálogo visual e atribuição a eventos.
  */
 export const AdminTemplatesPage: React.FC = () => {
-  const [events, setEvents] = React.useState<WeddingEvent[]>(() => WeddingStorageService.getEvents());
+  const [events, setEvents] = React.useState<WeddingEvent[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [busy, setBusy] = React.useState(false);
+  const [erro, setErro] = React.useState<string | null>(null);
 
-  const refresh = () => setEvents(WeddingStorageService.getEvents());
+  React.useEffect(() => {
+    let activo = true;
+    (async () => {
+      try {
+        const e = await getRepo().getEvents();
+        if (activo) setEvents(e);
+      } catch {
+        if (activo) setErro('Não foi possível carregar os eventos. Tente novamente mais tarde.');
+      } finally {
+        if (activo) setLoading(false);
+      }
+    })();
+    return () => {
+      activo = false;
+    };
+  }, []);
 
-  const assignTemplate = (event: WeddingEvent, templateId: TemplateId) => {
-    // O convite renderiza `paletteId`, não `templateId` — escreve os dois.
-    WeddingStorageService.saveEvent({ ...event, templateId, paletteId: paletteForTemplate(templateId) });
-    refresh();
+  const refresh = async () => {
+    try {
+      setEvents(await getRepo().getEvents());
+      setErro(null);
+    } catch {
+      setErro('Não foi possível actualizar a lista de eventos.');
+    }
   };
+
+  const assignTemplate = async (event: WeddingEvent, templateId: TemplateId) => {
+    setBusy(true);
+    setErro(null);
+    try {
+      // O convite renderiza `paletteId`, não `templateId` — escreve os dois.
+      await getRepo().saveEvent({ ...event, templateId, paletteId: paletteForTemplate(templateId) });
+      await refresh();
+    } catch {
+      setErro('Não foi possível atribuir o template ao evento.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div role="status" className="text-sm text-slate-500">
+        A carregar dados…
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -60,6 +103,12 @@ export const AdminTemplatesPage: React.FC = () => {
           {TEMPLATES.length} templates disponíveis · atribua um a cada evento.
         </p>
       </div>
+
+      {erro && (
+        <p role="alert" className="text-xs text-red-600">
+          {erro}
+        </p>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         {TEMPLATES.map((t) => {
@@ -93,8 +142,8 @@ export const AdminTemplatesPage: React.FC = () => {
                     <button
                       key={e.id}
                       onClick={() => assignTemplate(e, t.id)}
-                      disabled={e.templateId === t.id}
-                      className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-sm border transition-colors ${
+                      disabled={e.templateId === t.id || busy}
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-sm border transition-colors disabled:cursor-default ${
                         e.templateId === t.id
                           ? 'bg-emerald-50 border-emerald-200 text-emerald-700 cursor-default'
                           : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50 cursor-pointer'

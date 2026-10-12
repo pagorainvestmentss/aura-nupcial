@@ -1,16 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, ExternalLink, Eye, EyeOff, Trash2 } from 'lucide-react';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
 import { DEFAULT_EVENT } from '../../data/defaultWeddingData';
 import { getOccasion, eventNames, fallbackNames } from '../../data/occasions';
-import { OccasionId, WeddingEvent } from '../../types/wedding';
+import { Couple, Guest, OccasionId, WeddingEvent } from '../../types/wedding';
 
 /**
  * EVENTOS (admin) — criar, editar estado, publicar/despublicar, associar a cliente.
  */
 export const AdminEventosPage: React.FC = () => {
-  const [events, setEvents] = React.useState<WeddingEvent[]>(() => WeddingStorageService.getEvents());
+  const [events, setEvents] = React.useState<WeddingEvent[]>([]);
+  const [couples, setCouples] = React.useState<Couple[]>([]);
+  const [guests, setGuests] = React.useState<Guest[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [erro, setErro] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState(false);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [form, setForm] = React.useState({
     coupleId: '',
@@ -22,10 +27,38 @@ export const AdminEventosPage: React.FC = () => {
     locationDisplay: ''
   });
 
-  const couples = WeddingStorageService.getCouples();
-  const guests = WeddingStorageService.getGuests();
+  React.useEffect(() => {
+    let activo = true;
+    (async () => {
+      try {
+        const [e, c, g] = await Promise.all([
+          getRepo().getEvents(),
+          getRepo().getCouples(),
+          getRepo().getGuests()
+        ]);
+        if (!activo) return;
+        setEvents(e);
+        setCouples(c);
+        setGuests(g);
+      } catch {
+        if (activo) setErro('Não foi possível carregar os eventos. Tente novamente mais tarde.');
+      } finally {
+        if (activo) setLoading(false);
+      }
+    })();
+    return () => {
+      activo = false;
+    };
+  }, []);
 
-  const refresh = () => setEvents(WeddingStorageService.getEvents());
+  const refresh = async () => {
+    try {
+      setEvents(await getRepo().getEvents());
+      setErro(null);
+    } catch {
+      setErro('Não foi possível actualizar a lista de eventos.');
+    }
+  };
 
   const slugify = (value: string) =>
     value
@@ -35,48 +68,79 @@ export const AdminEventosPage: React.FC = () => {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     const couple = couples.find((c) => c.id === form.coupleId);
     if (!couple) return;
 
-    const slugBase = slugify(`${form.brideName}-${form.groomName}`) || `evento-${Date.now()}`;
-    const slug = events.some((ev) => ev.slug === slugBase) ? `${slugBase}-${Date.now()}` : slugBase;
+    setBusy(true);
+    setErro(null);
+    try {
+      const slugBase = slugify(`${form.brideName}-${form.groomName}`) || `evento-${Date.now()}`;
+      const slug = events.some((ev) => ev.slug === slugBase) ? `${slugBase}-${Date.now()}` : slugBase;
 
-    const newEvent: WeddingEvent = {
-      ...DEFAULT_EVENT,
-      id: `event-${Date.now()}`,
-      coupleId: couple.id,
-      slug,
-      occasion: form.occasion,
-      brideName: form.brideName.trim(),
-      groomName: form.groomName.trim(),
-      dateIso: form.dateIso || DEFAULT_EVENT.dateIso,
-      dateDisplay: form.dateDisplay.trim() || DEFAULT_EVENT.dateDisplay,
-      locationDisplay: form.locationDisplay.trim() || DEFAULT_EVENT.locationDisplay,
-      status: 'draft'
-    };
+      const newEvent: WeddingEvent = {
+        ...DEFAULT_EVENT,
+        id: `event-${Date.now()}`,
+        coupleId: couple.id,
+        slug,
+        occasion: form.occasion,
+        brideName: form.brideName.trim(),
+        groomName: form.groomName.trim(),
+        dateIso: form.dateIso || DEFAULT_EVENT.dateIso,
+        dateDisplay: form.dateDisplay.trim() || DEFAULT_EVENT.dateDisplay,
+        locationDisplay: form.locationDisplay.trim() || DEFAULT_EVENT.locationDisplay,
+        status: 'draft'
+      };
 
-    WeddingStorageService.saveEvent(newEvent);
-    couple.activeEventId = newEvent.id;
-    WeddingStorageService.saveCouple(couple);
-    setModalOpen(false);
-    refresh();
+      await getRepo().saveEvent(newEvent);
+      await getRepo().saveCouple({ ...couple, activeEventId: newEvent.id });
+      setModalOpen(false);
+      await refresh();
+    } catch {
+      setErro('Não foi possível criar o evento. Tente novamente.');
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const togglePublish = (ev: WeddingEvent) => {
-    WeddingStorageService.setEventStatus(ev.id, ev.status === 'active' ? 'draft' : 'active');
-    refresh();
+  const togglePublish = async (ev: WeddingEvent) => {
+    setBusy(true);
+    setErro(null);
+    try {
+      await getRepo().setEventStatus(ev.id, ev.status === 'active' ? 'draft' : 'active');
+      await refresh();
+    } catch {
+      setErro('Não foi possível alterar o estado do evento.');
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleDelete = (ev: WeddingEvent) => {
+  const handleDelete = async (ev: WeddingEvent) => {
     if (!confirm(`Remover o evento "${eventNames(ev) || ev.slug}"?`)) return;
-    WeddingStorageService.deleteEvent(ev.id);
-    refresh();
+    setBusy(true);
+    setErro(null);
+    try {
+      await getRepo().deleteEvent(ev.id);
+      await refresh();
+    } catch {
+      setErro('Não foi possível remover o evento.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const firstGuestToken = (eventId: string) =>
     guests.find((g) => g.eventId === eventId)?.token || '';
+
+  if (loading) {
+    return (
+      <div role="status" className="text-sm text-slate-500">
+        A carregar dados…
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -107,6 +171,12 @@ export const AdminEventosPage: React.FC = () => {
         </button>
       </div>
 
+      {erro && (
+        <p role="alert" className="text-xs text-red-600">
+          {erro}
+        </p>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-2">
         {events.map((ev) => {
           const couple = couples.find((c) => c.id === ev.coupleId);
@@ -127,8 +197,8 @@ export const AdminEventosPage: React.FC = () => {
                 <span
                   className={`text-[11px] px-2 py-0.5 rounded-full border ${
                     ev.status === 'active'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : 'bg-slate-100 text-slate-500 border-slate-200'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-slate-100 text-slate-500 border border-slate-200'
                   }`}
                 >
                   {ev.status === 'active' ? 'Publicado' : ev.status === 'draft' ? 'Rascunho' : ev.status}
@@ -149,8 +219,9 @@ export const AdminEventosPage: React.FC = () => {
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <button
+                  disabled={busy}
                   onClick={() => togglePublish(ev)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-sm border cursor-pointer transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-sm border cursor-pointer transition-colors disabled:opacity-60 ${
                     ev.status === 'active'
                       ? 'text-slate-600 border-slate-300 bg-white hover:bg-slate-50'
                       : 'text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
@@ -180,8 +251,9 @@ export const AdminEventosPage: React.FC = () => {
                 )}
 
                 <button
+                  disabled={busy}
                   onClick={() => handleDelete(ev)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-600 border border-red-200 bg-red-50 rounded-sm hover:bg-red-100 cursor-pointer ml-auto"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-600 border border-red-200 bg-red-50 rounded-sm hover:bg-red-100 cursor-pointer ml-auto disabled:opacity-60"
                 >
                   <Trash2 className="w-3 h-3" />
                   Remover
@@ -299,9 +371,10 @@ export const AdminEventosPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-medium text-white bg-slate-900 rounded-sm hover:bg-slate-800 cursor-pointer"
+                  disabled={busy}
+                  className="px-5 py-2 text-xs font-medium text-white bg-slate-900 rounded-sm hover:bg-slate-800 cursor-pointer disabled:opacity-60"
                 >
-                  Criar evento
+                  {busy ? 'A criar…' : 'Criar evento'}
                 </button>
               </div>
             </form>

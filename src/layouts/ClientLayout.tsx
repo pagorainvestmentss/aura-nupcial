@@ -11,8 +11,9 @@ import {
   Eye
 } from 'lucide-react';
 import { useAuth } from '../app/AuthContext';
-import { WeddingStorageService } from '../services/weddingStorage';
+import { getRepo } from '../services/repo';
 import { getOccasion } from '../data/occasions';
+import { Couple, WeddingEvent } from '../types/wedding';
 
 const CLIENT_NAV = (dadosLabel: string) => [
   { to: '/cliente', label: 'Visão geral', icon: Home, end: true },
@@ -31,19 +32,35 @@ export const ClientLayout: React.FC = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
-  const couple = React.useMemo(() => {
-    if (!session?.coupleId) return null;
-    return WeddingStorageService.getCoupleById(session.coupleId) || null;
-  }, [session]);
+  const [couple, setCouple] = React.useState<Couple | null>(null);
+  const [event, setEvent] = React.useState<WeddingEvent | null>(null);
+  const coupleId = session?.coupleId;
 
-  const event = React.useMemo(() => {
-    if (!couple) return null;
-    return (
-      WeddingStorageService.getEventById(couple.activeEventId) ||
-      WeddingStorageService.getEvents().find((e) => e.coupleId === couple.id) ||
-      null
-    );
-  }, [couple]);
+  React.useEffect(() => {
+    let active = true;
+    if (!coupleId) {
+      setCouple(null);
+      setEvent(null);
+      return;
+    }
+    (async () => {
+      const repo = getRepo();
+      const c = (await repo.getCoupleById(coupleId)) || null;
+      let ev: WeddingEvent | null = null;
+      if (c) {
+        ev =
+          (await repo.getEventById(c.activeEventId)) ||
+          (await repo.getEvents()).find((e) => e.coupleId === c.id) ||
+          null;
+      }
+      if (!active) return;
+      setCouple(c);
+      setEvent(ev);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [coupleId]);
 
   const occasion = React.useMemo(() => getOccasion(event?.occasion), [event?.occasion]);
   const navItems = React.useMemo(() => CLIENT_NAV(occasion.labels.navData), [occasion]);
@@ -53,9 +70,9 @@ export const ClientLayout: React.FC = () => {
     navigate('/login');
   };
 
-  const openInvitation = () => {
+  const openInvitation = async () => {
     if (!event) return;
-    const guests = WeddingStorageService.getGuestsByEventId(event.id);
+    const guests = await getRepo().getGuestsByEventId(event.id);
     const token = guests[0]?.token;
     if (token) navigate(`/convite/${event.slug}/${token}`);
     else navigate('/cliente/convite');

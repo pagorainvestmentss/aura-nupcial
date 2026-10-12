@@ -7,28 +7,19 @@ const EXAMPLES = [
     names: 'Mariana & Pedro',
     date: '15 Janeiro 2027 · Luanda',
     palette: 'Botânico Sálvia',
-    colors: ['#D8DFD5', '#5E6B56', '#FAF7F2'],
-    slug: 'mariana-pedro',
-    token: '8Fk92KsP',
-    live: true
+    colors: ['#D8DFD5', '#5E6B56', '#FAF7F2']
   },
   {
     names: 'Sofia & André',
     date: '22 Maio 2027 · Lisboa',
     palette: 'Elegância Terracota',
-    colors: ['#E8D5C4', '#A9714B', '#FBF6F0'],
-    slug: 'sofia-andre',
-    token: 'marta-4Rc8Bn',
-    live: true
+    colors: ['#E8D5C4', '#A9714B', '#FBF6F0']
   },
   {
     names: 'Joana & Miguel',
     date: '12 Dezembro 2026 · Benguela',
     palette: 'Clássico Dourado',
-    colors: ['#EFE4CC', '#B8975A', '#FAF7F2'],
-    slug: 'joana-miguel',
-    token: 'domingos-3Vn9Pa',
-    live: true
+    colors: ['#EFE4CC', '#B8975A', '#FAF7F2']
   }
 ];
 
@@ -39,16 +30,16 @@ export const ExemplosPage: React.FC = () => {
         <p className="text-[11px] uppercase tracking-[0.3em] text-stone-400 mb-3">Portefólio</p>
         <h1 className="font-serif text-4xl text-stone-900">Exemplos de convites</h1>
         <p className="mt-4 text-sm text-stone-600 font-sans leading-relaxed">
-          Cada convite é uma peça única. Estes exemplos estão vivos — abra-os e navegue
-          como um convidado real.
+          Cada convite é uma peça única, desenhada à medida de cada casal. Estas são algumas das
+          atmosferas que criamos.
         </p>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {EXAMPLES.map((ex) => (
           <div
-            key={ex.slug}
-            className="bg-white border border-stone-200 rounded-xs overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col"
+            key={ex.names}
+            className="bg-white border border-stone-200 rounded-xs overflow-hidden shadow-xs flex flex-col"
           >
             <div
               className="h-40 flex items-center justify-center"
@@ -67,16 +58,31 @@ export const ExemplosPage: React.FC = () => {
             </div>
             <div className="p-5 flex-1 flex flex-col">
               <p className="text-xs text-stone-500 font-sans">{ex.date}</p>
-              <Link
-                to={`/convite/${ex.slug}/${ex.token}`}
-                className="mt-4 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[11px] uppercase tracking-[0.2em] font-semibold text-stone-800 bg-[#FAF7F2] border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors"
-              >
-                Abrir convite
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+              <div className="mt-4 flex gap-1.5" aria-label={`Cores do tema ${ex.palette}`}>
+                {ex.colors.map((c) => (
+                  <span
+                    key={c}
+                    className="h-6 w-6 rounded-full border border-stone-200"
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="text-center mt-12">
+        <p className="text-sm text-stone-600 font-sans mb-4">
+          Quer um convite só seu? Comece em minutos.
+        </p>
+        <Link
+          to="/criar"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors"
+        >
+          Criar o meu convite
+          <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
     </div>
   );

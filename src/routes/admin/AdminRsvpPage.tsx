@@ -1,6 +1,7 @@
 import React from 'react';
 import { CheckCircle2, XCircle, Clock, Users, Download } from 'lucide-react';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
+import { Guest, WeddingEvent } from '../../types/wedding';
 
 /**
  * RSVP (admin) — consolidação de respostas por evento.
@@ -8,9 +9,29 @@ import { WeddingStorageService } from '../../services/weddingStorage';
 export const AdminRsvpPage: React.FC = () => {
   const [eventFilter, setEventFilter] = React.useState('all');
   const [statusFilter, setStatusFilter] = React.useState('all');
+  const [events, setEvents] = React.useState<WeddingEvent[]>([]);
+  const [guests, setGuests] = React.useState<Guest[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [erro, setErro] = React.useState<string | null>(null);
 
-  const events = WeddingStorageService.getEvents();
-  const guests = WeddingStorageService.getGuests();
+  React.useEffect(() => {
+    let activo = true;
+    (async () => {
+      try {
+        const [e, g] = await Promise.all([getRepo().getEvents(), getRepo().getGuests()]);
+        if (!activo) return;
+        setEvents(e);
+        setGuests(g);
+      } catch {
+        if (activo) setErro('Não foi possível carregar as respostas. Tente novamente mais tarde.');
+      } finally {
+        if (activo) setLoading(false);
+      }
+    })();
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   const filtered = guests.filter((g) => {
     if (eventFilter !== 'all' && g.eventId !== eventFilter) return false;
@@ -41,6 +62,14 @@ export const AdminRsvpPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  if (loading) {
+    return (
+      <div role="status" className="text-sm text-slate-500">
+        A carregar dados…
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -58,6 +87,12 @@ export const AdminRsvpPage: React.FC = () => {
           Exportar CSV
         </button>
       </div>
+
+      {erro && (
+        <p role="alert" className="text-xs text-red-600">
+          {erro}
+        </p>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3">
         <select

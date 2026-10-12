@@ -1,16 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Ban, CheckCircle2, CalendarDays, Search } from 'lucide-react';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
 import { getOccasion, eventNames, fallbackNames } from '../../data/occasions';
-import { Couple, PlanId } from '../../types/wedding';
+import { Couple, Guest, PlanId, WeddingEvent } from '../../types/wedding';
 import { PLAN_LABEL } from '../../data/site';
 
 /**
  * CLIENTES (admin) — criar, editar, visualizar, suspender, activar, consultar eventos.
  */
 export const AdminClientesPage: React.FC = () => {
-  const [couples, setCouples] = React.useState<Couple[]>(() => WeddingStorageService.getCouples());
+  const [couples, setCouples] = React.useState<Couple[]>([]);
+  const [events, setEvents] = React.useState<WeddingEvent[]>([]);
+  const [guests, setGuests] = React.useState<Guest[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [erro, setErro] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Couple | null>(null);
@@ -22,10 +27,38 @@ export const AdminClientesPage: React.FC = () => {
     password: ''
   });
 
-  const events = WeddingStorageService.getEvents();
-  const guests = WeddingStorageService.getGuests();
+  React.useEffect(() => {
+    let activo = true;
+    (async () => {
+      try {
+        const [c, e, g] = await Promise.all([
+          getRepo().getCouples(),
+          getRepo().getEvents(),
+          getRepo().getGuests()
+        ]);
+        if (!activo) return;
+        setCouples(c);
+        setEvents(e);
+        setGuests(g);
+      } catch {
+        if (activo) setErro('Não foi possível carregar os clientes. Tente novamente mais tarde.');
+      } finally {
+        if (activo) setLoading(false);
+      }
+    })();
+    return () => {
+      activo = false;
+    };
+  }, []);
 
-  const refresh = () => setCouples(WeddingStorageService.getCouples());
+  const refresh = async () => {
+    try {
+      setCouples(await getRepo().getCouples());
+      setErro(null);
+    } catch {
+      setErro('Não foi possível actualizar a lista de clientes.');
+    }
+  };
 
   const filtered = couples.filter(
     (c) =>
@@ -45,42 +78,66 @@ export const AdminClientesPage: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editing) {
-      WeddingStorageService.saveCouple({
-        ...editing,
-        name: form.name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim(),
-        plan: form.plan,
-        password: form.password
-      });
-    } else {
-      const id = `couple-${Date.now()}`;
-      const newCouple: Couple = {
-        id,
-        name: form.name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim(),
-        createdAt: new Date().toISOString().slice(0, 10),
-        plan: form.plan,
-        activeEventId: '',
-        status: 'active',
-        paymentStatus: 'pending',
-        password: form.password
-      };
-      WeddingStorageService.saveCouple(newCouple);
+    setBusy(true);
+    setErro(null);
+    try {
+      if (editing) {
+        await getRepo().saveCouple({
+          ...editing,
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          plan: form.plan,
+          password: form.password
+        });
+      } else {
+        const id = `couple-${Date.now()}`;
+        const newCouple: Couple = {
+          id,
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          createdAt: new Date().toISOString().slice(0, 10),
+          plan: form.plan,
+          activeEventId: '',
+          status: 'active',
+          paymentStatus: 'pending',
+          password: form.password
+        };
+        await getRepo().saveCouple(newCouple);
+      }
+      setModalOpen(false);
+      await refresh();
+    } catch {
+      setErro('Não foi possível guardar o cliente. Verifique os dados e tente novamente.');
+    } finally {
+      setBusy(false);
     }
-    setModalOpen(false);
-    refresh();
   };
 
-  const toggleStatus = (c: Couple) => {
-    const next = c.status === 'active' ? 'suspended' : 'active';
-    WeddingStorageService.setClientStatus(c.id, next);
-    refresh();
+  const toggleStatus = async (c: Couple) => {
+    setBusy(true);
+    setErro(null);
+    try {
+      const next = c.status === 'active' ? 'suspended' : 'active';
+      await getRepo().setClientStatus(c.id, next);
+      await refresh();
+    } catch {
+      setErro('Não foi possível alterar o estado do cliente.');
+    } finally {
+      setBusy(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div role="status" className="text-sm text-slate-500">
+        A carregar dados…
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -99,6 +156,12 @@ export const AdminClientesPage: React.FC = () => {
           Criar cliente
         </button>
       </div>
+
+      {erro && (
+        <p role="alert" className="text-xs text-red-600">
+          {erro}
+        </p>
+      )}
 
       <div className="relative max-w-xs">
         <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
@@ -160,8 +223,9 @@ export const AdminClientesPage: React.FC = () => {
                   Editar
                 </button>
                 <button
+                  disabled={busy}
                   onClick={() => toggleStatus(c)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-sm border cursor-pointer transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-sm border cursor-pointer transition-colors disabled:opacity-60 ${
                     c.status === 'active'
                       ? 'text-red-600 border-red-200 bg-red-50 hover:bg-red-100'
                       : 'text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
@@ -275,9 +339,10 @@ export const AdminClientesPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-medium text-white bg-slate-900 rounded-sm hover:bg-slate-800 cursor-pointer"
+                  disabled={busy}
+                  className="px-5 py-2 text-xs font-medium text-white bg-slate-900 rounded-sm hover:bg-slate-800 cursor-pointer disabled:opacity-60"
                 >
-                  Guardar
+                  {busy ? 'A guardar…' : 'Guardar'}
                 </button>
               </div>
             </form>

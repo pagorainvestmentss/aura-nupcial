@@ -1,7 +1,8 @@
 import React from 'react';
 import { Plus, Pencil, Trash2, Copy, Check, Search, Users, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { WeddingStorageService, generateRandomToken } from '../../services/weddingStorage';
+import { generateRandomToken } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
 import { Guest, SalutationType } from '../../types/wedding';
 import { useClientEvent } from './useClientEvent';
 import { canAddGuest, planGuestLimitLabel, PLAN_LABEL } from '../../data/site';
@@ -20,12 +21,14 @@ const EMPTY_FORM = {
  */
 export const ClientConvidadosPage: React.FC = () => {
   const [version, setVersion] = React.useState(0);
-  const { couple, event, guests } = useClientEvent(version);
+  const { couple, event, guests, loading } = useClientEvent(version);
   const [query, setQuery] = React.useState('');
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Guest | null>(null);
   const [form, setForm] = React.useState(EMPTY_FORM);
   const [copied, setCopied] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   const refresh = () => setVersion((v) => v + 1);
 
@@ -55,6 +58,7 @@ export const ClientConvidadosPage: React.FC = () => {
   const openCreate = () => {
     setEditing(null);
     setForm(EMPTY_FORM);
+    setError(null);
     setModalOpen(true);
   };
 
@@ -67,54 +71,71 @@ export const ClientConvidadosPage: React.FC = () => {
       salutationType: g.salutationType,
       maxGuests: String(g.maxGuests || 1)
     });
+    setError(null);
     setModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!event || !form.name.trim()) return;
     if (!editing && !canAddGuest(plan, guests.length)) return;
 
-    if (editing) {
-      WeddingStorageService.saveGuest({
-        ...editing,
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        relationship: form.relationship.trim(),
-        salutationType: form.salutationType,
-        maxGuests: Number(form.maxGuests) || 1
-      });
-    } else {
-      const newGuest: Guest = {
-        id: `guest-${Date.now()}`,
-        eventId: event.id,
-        name: form.name.trim(),
-        salutationType: form.salutationType,
-        relationship: form.relationship.trim(),
-        phone: form.phone.trim(),
-        token: generateRandomToken(
-          form.name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)
-        ),
-        maxGuests: Number(form.maxGuests) || 1,
-        confirmedGuests: 0,
-        rsvpStatus: 'pending',
-        accessCount: 0,
-        qrStatus: 'active'
-      };
-      WeddingStorageService.saveGuest(newGuest);
+    setBusy(true);
+    setError(null);
+    try {
+      if (editing) {
+        await getRepo().saveGuest({
+          ...editing,
+          name: form.name.trim(),
+          phone: form.phone.trim(),
+          relationship: form.relationship.trim(),
+          salutationType: form.salutationType,
+          maxGuests: Number(form.maxGuests) || 1
+        });
+      } else {
+        const newGuest: Guest = {
+          id: `guest-${Date.now()}`,
+          eventId: event.id,
+          name: form.name.trim(),
+          salutationType: form.salutationType,
+          relationship: form.relationship.trim(),
+          phone: form.phone.trim(),
+          token: generateRandomToken(
+            form.name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)
+          ),
+          maxGuests: Number(form.maxGuests) || 1,
+          confirmedGuests: 0,
+          rsvpStatus: 'pending',
+          accessCount: 0,
+          qrStatus: 'active'
+        };
+        await getRepo().saveGuest(newGuest);
+      }
+
+      setModalOpen(false);
+      refresh();
+    } catch {
+      setError('Não foi possível guardar o convidado. Verifique a sua ligação e tente de novo.');
+    } finally {
+      setBusy(false);
     }
-
-    setModalOpen(false);
-    refresh();
   };
 
-  const handleDelete = (g: Guest) => {
+  const handleDelete = async (g: Guest) => {
     if (!confirm(`Remover ${g.name} da lista de convidados?`)) return;
-    WeddingStorageService.deleteGuest(g.id);
-    refresh();
+    setBusy(true);
+    setError(null);
+    try {
+      await getRepo().deleteGuest(g.id);
+      refresh();
+    } catch {
+      setError('Não foi possível remover o convidado. Verifique a sua ligação e tente de novo.');
+    } finally {
+      setBusy(false);
+    }
   };
 
-  if (!event) {
+  if (loading || !event) {
     return (
       <div className="bg-white border border-stone-200 rounded-xs p-8 text-center">
         <p className="text-sm text-stone-500 font-sans">A preparar a sua lista...</p>
@@ -179,6 +200,10 @@ export const ClientConvidadosPage: React.FC = () => {
         />
       </div>
 
+      {error && !modalOpen && (
+        <p className="text-xs text-red-700 font-sans">{error}</p>
+      )}
+
       <div className="bg-white border border-stone-200 rounded-xs divide-y divide-stone-100">
         {filtered.map((g) => (
           <div key={g.id} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -236,7 +261,8 @@ export const ClientConvidadosPage: React.FC = () => {
               </button>
               <button
                 onClick={() => handleDelete(g)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-600 border border-red-200 bg-red-50 rounded-xs hover:bg-red-100 cursor-pointer"
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-600 border border-red-200 bg-red-50 rounded-xs hover:bg-red-100 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -304,19 +330,26 @@ export const ClientConvidadosPage: React.FC = () => {
                   className="w-full py-2.5 px-3 text-sm font-sans bg-[#FAF7F2] border border-stone-300 rounded-xs focus:outline-none focus:border-[#5E6B56]"
                 />
               </div>
+              {error && (
+                <p className="text-xs text-red-700 font-sans pt-1">{error}</p>
+              )}
               <div className="flex justify-end gap-3 pt-3 border-t border-stone-100">
                 <button
                   type="button"
-                  onClick={() => setModalOpen(false)}
+                  onClick={() => {
+                    setModalOpen(false);
+                    setError(null);
+                  }}
                   className="px-4 py-2 text-xs text-stone-600 hover:text-stone-900 cursor-pointer font-sans"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs uppercase tracking-widest font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs cursor-pointer"
+                  disabled={busy}
+                  className="px-5 py-2 text-xs uppercase tracking-widest font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Guardar
+                  {busy ? 'A guardar…' : 'Guardar'}
                 </button>
               </div>
             </form>

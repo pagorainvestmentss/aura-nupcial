@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { WeddingEvent, Guest, ColorPalette, RsvpStatus } from '../../types/wedding';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
 import { BotanicalCorner, BotanicalDivider } from '../common/BotanicalFlourish';
 import { Check, X, Users, Utensils, HeartHandshake, UserPlus, Clock } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -77,44 +77,48 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
           { value: Math.floor((countdownMs % 60000) / 1000), label: 'Seg' }
         ];
 
-  const handleSubmit = (chosenStatus: RsvpStatus) => {
+  const handleSubmit = async (chosenStatus: RsvpStatus) => {
     if (!guest || pastDeadline) return;
     setIsSubmitting(true);
     setSubmitError(null);
 
     const actualConfirmedCount = chosenStatus === 'confirmed' ? Math.max(1, seatCount) : 0;
 
-    const result = WeddingStorageService.updateRsvp({
-      guestId: guest.id,
-      rsvpStatus: chosenStatus,
-      confirmedGuests: actualConfirmedCount,
-      notes,
-      dietaryRestrictions: dietary,
-      companions: companions.map((c) => c.trim()),
-      group: groupOptions.length > 0 ? group : ''
-    });
+    try {
+      const result = await getRepo().updateRsvp({
+        guestId: guest.id,
+        rsvpStatus: chosenStatus,
+        confirmedGuests: actualConfirmedCount,
+        notes,
+        dietaryRestrictions: dietary,
+        companions: companions.map((c) => c.trim()),
+        group: groupOptions.length > 0 ? group : ''
+      });
 
-    setIsSubmitting(false);
+      if (result.success && result.guest) {
+        setStatus(chosenStatus);
+        setSubmitted(true);
+        onRsvpSuccess(result.guest);
 
-    if (result.success && result.guest) {
-      setStatus(chosenStatus);
-      setSubmitted(true);
-      onRsvpSuccess(result.guest);
-
-      if (chosenStatus === 'confirmed') {
-        confetti({
-          particleCount: 50,
-          spread: 60,
-          origin: { y: 0.7 },
-          colors: [palette.accent, palette.goldAccent, '#D8DFD5']
-        });
+        if (chosenStatus === 'confirmed') {
+          confetti({
+            particleCount: 50,
+            spread: 60,
+            origin: { y: 0.7 },
+            colors: [palette.accent, palette.goldAccent, '#D8DFD5']
+          });
+        }
+      } else {
+        setSubmitError(
+          result.error === 'prazo'
+            ? 'O prazo de resposta já terminou. Se ainda precisar de alterar, fale diretamente com os noivos.'
+            : 'Não foi possível guardar a sua resposta. Verifique a ligação e tente novamente.'
+        );
       }
-    } else {
-      setSubmitError(
-        result.error === 'prazo'
-          ? 'O prazo de resposta já terminou. Se ainda precisar de alterar, fale diretamente com os noivos.'
-          : 'Não foi possível guardar a sua resposta. Verifique a ligação e tente novamente.'
-      );
+    } catch {
+      setSubmitError('Não foi possível guardar a sua resposta. Verifique a ligação e tente novamente.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

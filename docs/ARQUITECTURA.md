@@ -217,7 +217,11 @@ AuthSession (em memória)     → role, email, displayName, coupleId?
 | `SalutationType` | `individual` · `couple` · `family` · `custom` |
 | `templateId` | `botanical-sage` · `elegance-terracotta` · `classic-gold` · `romance-rose` |
 
-### 6.3 Persistência actual (Fase 1)
+### 6.3 Persistência — modo local (`VITE_DATA_BACKEND=local`)
+
+> Em produção o backend é o **Supabase** (§9); estas chaves `localStorage` são o modo
+> demo/dev, acessível via `localRepository` (`src/services/localRepository.ts`). A UI fala
+> sempre com a interface `WeddingRepository`, nunca directamente com o `localStorage`.
 
 | Chave `localStorage` | Conteúdo |
 |----------------------|----------|
@@ -340,7 +344,19 @@ src/
 
 ---
 
-## 9. Migração para Supabase (Fase 2 — nada implementado)
+## 9. Migração para Supabase (Fase 2 — IMPLEMENTADA)
+
+> **Estado (Fase 2, Issue #29):** o backend real está activo em produção. A camada de dados é
+> **assíncrona** e passa por uma interface única `WeddingRepository` (`src/services/repository.ts`)
+> com duas implementações: `localRepository` (localStorage — modo demo/dev) e `supabaseRepository`
+> (Supabase Auth + Postgres — produção). A fábrica `getRepo()` (`src/services/repo.ts`) escolhe a
+> implementação pela variável `VITE_DATA_BACKEND=supabase|local` (por omissão `local`).
+>
+> `AuthContext` ficou **assíncrono** (`login`/`register` devolvem `Promise`). O `register` cria o
+> casal + evento + slug **no servidor** via trigger `handle_new_user` (migração `…_signup_creates_couple.sql`),
+> usando os metadados do `signUp`; daí o ecrã "Quase lá!" a pedir confirmação de email.
+> Convidado continua **sem conta** — convite por token via RPC pública `resolve_invitation`.
+> RLS activo em todas as tabelas; a leitura anónima de `events`/`guests` faz-se só pela RPC.
 
 ### 9.1 Auth
 
@@ -405,31 +421,34 @@ Limite de galeria por plano em `PLAN_GALLERY_LIMIT` (Essencial 6 / Pro 20) — o
 ao atingir o limite. Sem `heroPhoto`, o arco do convite cai para um bloco tipográfico (`CoupleHeroSection`).
 Migração `migrateLegacyPhotos()` em `weddingStorage.init()` corrige URLs de assets renomeados.
 
-**Fase 2 (Supabase):**
-Buckets: `event-photos` (privado, leitura por URL assinada) e avatares de perfil.
-Upload restringido por RLS ao casal dono do evento.
+**Fase 2 (Supabase) — ADIADO (Issue de seguimento):**
+A Fase 2 arranca **sem** bucket de Storage: as fotos continuam a ser `dataURL` (JPEG comprimido)
+gravadas nos campos `heroPhoto`/`gallery` da linha do evento (jsonb). Funciona em produção e não
+bloqueia o corte. Optimização futura: mover para bucket privado `event-photos` (leitura por URL
+assinada, upload por RLS ao casal dono) para não inflar as linhas com base64.
 
-### 9.6 Plano de migração
+### 9.6 Migração — plano executado (Issue A #28 · Issue B #29)
 
-1. Criar projecto + tabelas + `profiles` (trigger em `auth.users`).
-2. Activar RLS em **todas** as tabelas antes de qualquer dado real.
-3. `SupabaseAuth` a substituir `AuthContext` (mesma interface pública `login/logout/session`).
-4. `weddingStorage.ts` → camada `supabaseRepository` (ver decisão sync/async abaixo).
-5. Migrar seed demo → fixtures SQL.
-6. Testar a cadeia inteira: admin → cliente → convidado → RSVP → check-in.
+**Decisões adoptadas:**
+- **Assíncrono, sem React Query** — `WeddingRepository` com `await` simples + `useState`/`useEffect`;
+  skeletons/estados de loading já existentes. Menos dependência, mesma garantia.
+- **Auth por email + palavra-passe** para o cliente; a palavra-passe Supabase é o **telefone em E.164**
+  (`phoneAsPassword`: dígitos, `00`→removido, `9xxxxxxxx`→`244…`, prefixo `+`). Admin usa password forte.
+- **Autoconfirm bloqueado** (`mailer_autoconfirm=False` e config da Management API bloqueada) →
+  trigger `handle_new_user` cria casal+evento+slug+`profiles.couple_id` **no momento do `signUp`**
+  a partir dos metadados (`aura_name`, `aura_phone`, `aura_occasion`, `aura_plan`). Consequência UX:
+  registo → email de confirmação → login (ecrã "Quase lá!").
+- **Convidado continua sem conta**; RSVP e QR validados por token via RPCs `submit_rsvp`/`validate_qr`.
+- **Base limpa** — dados demo removidos; Gabriel recriado manualmente; links de demonstração retirados.
+- **Fotos** ficam em `dataURL` na linha do evento (bucket `event-photos` adiado — ver §9.5).
 
-> **⚠ Decisão pendente antes de implementar: sync vs async.**
-> As assinaturas actuais de `weddingStorage.ts` são **síncronas** (`getEvents(): WeddingEvent[]`);
-> o Supabase é **async**. Duas opções:
->
-> 1. **Repositório assíncrono + React Query** *(recomendado)* — cache, invalidação e estados
->    de loading resolvidos de graça; prepara Supabase Realtime. Exige migrar as ~66 chamadas
->    actuais para `async` (as páginas passam a ter loading/error — os skeletons já existem).
-> 2. Manter assinaturas síncronas com cache local hidratado no arranque — menos mudanças,
->    mas dados potencialmente desactualizados e writes que mesmo assim teriam de ser async.
->
-> Os testes automatizados (Issue #5 — 59 testes, `npm test`) são a rede de segurança desta migração.
-> Registado na Issue #16.
+**RPCs (migrations `…_align_app_types.sql` e `…_invitation_public_access.sql`):**
+`register_client` (authenticated), `submit_rsvp`, `validate_qr`, `resolve_invitation` (anon, devolve
+`{ok, event, guest, couple_status}`, regista acesso, só `status='active'`).
+
+> **Efeito lateral aceite:** convites `suspended`/`draft` vistos por anónimos em produção mostram
+> "Convite Não Encontrado" (a RPC só devolve activos) em vez de "Indisponível" — mais privado.
+> No modo local a página aplica os gates de estado ela própria (defesa em profundidade).
 
 ---
 
@@ -459,8 +478,11 @@ Upload restringido por RLS ao casal dono do evento.
 | 5.4 | **Fotos** — upload pelo cliente (hero + galeria com legendas, limite por plano, fallback do arco sem foto) + substituição dos assets de casal branco (landing/convites) por fotos de casal negro com migração de URLs antigos | ✅ lint + build + Playwright 3010 |
 | 5.5 | **RSVP completo** — contagem decrescente para o prazo, acompanhantes nomeados (cada nome = 1 lugar, cap `maxGuests`) e grupo Noiva/Noivo (opções por ocasião, vazio esconde o campo); gravado em `companions`/`group` do convidado e visível nas listas admin/cliente + CSV | ✅ lint + build + Playwright 3010 |
 | 6 | Fase 2 de design — PDFs de referência (pasta fornecida pelo utilizador) | ⏳ por receber |
-| 7 | Supabase: schema + RLS + auth + RPCs (secção 9) | ⏳ Fase 2 (adiada — ver decisão sync/async §9.6) |
+| 7 | Supabase: schema + RLS + auth + RPCs (secção 9) | ✅ Issue A #28 + Issue B #29 (corte de produção) |
 | 8 | Testes automatizados (unit + fluxo RSVP/check-in) | ✅ Vitest + CI em cada PR (Issue #5 · PR #15 · 59 testes) |
 | 9 | Code-splitting (bundle actual ~592 kB) | ✅ rotas em `React.lazy` + chunk por página (~345 kB) |
 | 10 | Nota menor: dashboard admin duplica nome do evento/cliente na tabela de eventos | ⏳ cosmético |
 | 11 | Limpeza de deps sem uso + lock file único + docs actualizadas | ✅ Issue #16 |
+| 12 | Fotos via Storage `event-photos` (§9.5) — evitar base64 nas linhas do evento | ⏳ Issue de seguimento |
+| 13 | Recuperação de palavra-passe (o cliente só tem a palavra-passe=telefone) | ⏳ Issue de seguimento |
+| 14 | Activar *leaked password protection* + rotação das chaves expostas durante a migração | ⏳ operação Supabase/GitHub/Vercel |

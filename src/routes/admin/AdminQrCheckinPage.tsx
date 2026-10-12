@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScanLine, CheckCircle2, Clock, XCircle } from 'lucide-react';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
 import { Guest, WeddingEvent } from '../../types/wedding';
 
 /**
@@ -15,15 +15,51 @@ export const AdminQrCheckinPage: React.FC = () => {
     guest?: Guest;
     event?: WeddingEvent;
   } | null>(null);
+  const [guests, setGuests] = React.useState<Guest[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [busy, setBusy] = React.useState(false);
+  const [erro, setErro] = React.useState<string | null>(null);
 
-  const guests = WeddingStorageService.getGuests();
+  React.useEffect(() => {
+    let activo = true;
+    (async () => {
+      try {
+        const g = await getRepo().getGuests();
+        if (!activo) return;
+        setGuests(g);
+      } catch {
+        if (activo) setErro('Não foi possível carregar os convidados. Tente novamente mais tarde.');
+      } finally {
+        if (activo) setLoading(false);
+      }
+    })();
+    return () => {
+      activo = false;
+    };
+  }, []);
 
-  const handleScan = (e: React.FormEvent) => {
+  const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!qrInputToken.trim()) return;
-    const result = WeddingStorageService.validateQrCheckIn(qrInputToken.trim());
-    setScanResult(result);
+    setBusy(true);
+    setErro(null);
+    try {
+      const result = await getRepo().validateQrCheckIn(qrInputToken.trim());
+      setScanResult(result);
+    } catch {
+      setErro('Não foi possível validar o passe. Tente novamente.');
+    } finally {
+      setBusy(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div role="status" className="text-sm text-slate-500">
+        A carregar dados…
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -34,6 +70,12 @@ export const AdminQrCheckinPage: React.FC = () => {
           QR já validados.
         </p>
       </div>
+
+      {erro && (
+        <p role="alert" className="text-xs text-red-600">
+          {erro}
+        </p>
+      )}
 
       <div className="bg-white border border-slate-200 rounded-sm p-6 sm:p-8 max-w-xl">
         <div className="text-center mb-6">
@@ -76,9 +118,10 @@ export const AdminQrCheckinPage: React.FC = () => {
               />
               <button
                 type="submit"
-                className="px-6 py-2.5 text-xs uppercase tracking-widest font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-sm cursor-pointer"
+                disabled={busy}
+                className="px-6 py-2.5 text-xs uppercase tracking-widest font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-sm cursor-pointer disabled:opacity-60"
               >
-                Validar
+                {busy ? 'A validar…' : 'Validar'}
               </button>
             </div>
           </div>

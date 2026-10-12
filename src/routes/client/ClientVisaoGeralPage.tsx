@@ -14,7 +14,7 @@ import {
   PenLine
 } from 'lucide-react';
 import { useClientEvent } from './useClientEvent';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
 import { eventNames, getOccasion } from '../../data/occasions';
 import { planGuestLimitLabel, PLAN_LABEL, PLAN_GUEST_LIMIT, isUpgrade } from '../../data/site';
 import { PlanId } from '../../types/wedding';
@@ -25,7 +25,9 @@ import { Reveal } from '../../components/motion/Reveal';
  */
 export const ClientVisaoGeralPage: React.FC = () => {
   const [version, setVersion] = React.useState(0);
-  const { couple, event, guests } = useClientEvent(version);
+  const { couple, event, guests, loading } = useClientEvent(version);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const refresh = () => setVersion((v) => v + 1);
 
   const confirmed = guests.filter((g) => g.rsvpStatus === 'confirmed');
@@ -34,7 +36,7 @@ export const ClientVisaoGeralPage: React.FC = () => {
   const people = confirmed.reduce((acc, g) => acc + (g.confirmedGuests || 1), 0);
   const opened = guests.reduce((acc, g) => acc + (g.accessCount || 0), 0);
 
-  const switchPlan = (plan: PlanId) => {
+  const switchPlan = async (plan: PlanId) => {
     if (!couple) return;
     const upgrade = isUpgrade(couple.plan, plan) && couple.pendingPlan !== plan;
     const sameRankOrHigher = plan === couple.plan || isUpgrade(plan, couple.plan);
@@ -43,14 +45,22 @@ export const ClientVisaoGeralPage: React.FC = () => {
       ? `Pedir o upgrade para o plano ${PLAN_LABEL[plan]} (${planGuestLimitLabel(plan)})? O pagamento é confirmado pela equipa — o plano só muda depois de aprovado.`
       : `Mudar para o plano ${PLAN_LABEL[plan]} (${planGuestLimitLabel(plan)})?`;
     if (!confirm(msg)) return;
-    WeddingStorageService.requestPlanChange(couple.id, plan);
-    refresh();
+    setBusy(true);
+    setError(null);
+    try {
+      await getRepo().requestPlanChange(couple.id, plan);
+      refresh();
+    } catch {
+      setError('Não foi possível pedir a mudança de plano. Verifique a sua ligação e tente de novo.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const suspended =
     couple?.status === 'suspended' || event?.status === 'suspended';
 
-  const publish = () => {
+  const publish = async () => {
     if (!event) return;
     if (couple?.status === 'suspended') {
       alert('A sua conta está suspensa pela equipa Aura Nupcial. Contacte-nos para a reactivar.');
@@ -61,17 +71,25 @@ export const ClientVisaoGeralPage: React.FC = () => {
       return;
     }
     if (couple?.paymentStatus !== 'paid') return;
-    if (event.status === 'active') {
-      if (!confirm('Retirar o convite do ar? Os convidados deixam de conseguir abri-lo.')) return;
-      WeddingStorageService.setEventStatus(event.id, 'draft');
-    } else {
-      if (!confirm('Publicar o convite? O link fica activo para os convidados.')) return;
-      WeddingStorageService.setEventStatus(event.id, 'active');
+    setBusy(true);
+    setError(null);
+    try {
+      if (event.status === 'active') {
+        if (!confirm('Retirar o convite do ar? Os convidados deixam de conseguir abri-lo.')) return;
+        await getRepo().setEventStatus(event.id, 'draft');
+      } else {
+        if (!confirm('Publicar o convite? O link fica activo para os convidados.')) return;
+        await getRepo().setEventStatus(event.id, 'active');
+      }
+      refresh();
+    } catch {
+      setError('Não foi possível alterar o estado do convite. Verifique a sua ligação e tente de novo.');
+    } finally {
+      setBusy(false);
     }
-    refresh();
   };
 
-  if (!event || !couple) {
+  if (loading || !event || !couple) {
     return (
       <div className="bg-white border border-stone-200 rounded-xs p-8 text-center">
         <p className="text-sm text-stone-500 font-sans">
@@ -131,6 +149,10 @@ export const ClientVisaoGeralPage: React.FC = () => {
             'Data e local por definir'}
         </p>
       </div>
+
+      {error && (
+        <p className="text-xs text-red-700 font-sans">{error}</p>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <span
@@ -193,12 +215,12 @@ export const ClientVisaoGeralPage: React.FC = () => {
                 ) : s.title === 'Publicar o convite' ? (
                   <button
                     onClick={publish}
-                    disabled={suspended || (!paid && !published)}
+                    disabled={busy || suspended || (!paid && !published)}
                     className={`flex items-center w-full text-left rounded-xs p-3.5 border transition-colors ${
                       paid && !suspended
                         ? 'bg-[#5E6B56] border-[#5E6B56] hover:bg-[#4E5B46] cursor-pointer'
                         : 'bg-stone-50 border-stone-200 cursor-not-allowed'
-                    }`}
+                    } ${busy ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
                     <div className={`flex items-start gap-3 w-full ${paid && !suspended ? 'text-white' : ''}`}>
                       {s.done ? (
@@ -276,7 +298,8 @@ export const ClientVisaoGeralPage: React.FC = () => {
                 key={p}
                 type="button"
                 onClick={() => switchPlan(p)}
-                className={`text-left p-4 rounded-xs border transition-colors cursor-pointer ${active ? 'border-[#5E6B56] bg-white shadow-md' : 'border-stone-200 bg-[#FAF7F2] hover:border-stone-300'}`}
+                disabled={busy}
+                className={`text-left p-4 rounded-xs border transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed ${active ? 'border-[#5E6B56] bg-white shadow-md' : 'border-stone-200 bg-[#FAF7F2] hover:border-stone-300'}`}
               >
                 <div className="flex items-center justify-between">
                   <p className="font-serif text-lg text-stone-900">{PLAN_LABEL[p]}</p>

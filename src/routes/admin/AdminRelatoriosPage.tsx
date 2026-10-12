@@ -1,14 +1,41 @@
 import React from 'react';
 import { Download, BarChart3 } from 'lucide-react';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { getRepo } from '../../services/repo';
+import { Couple, Guest, WeddingEvent } from '../../types/wedding';
 
 /**
  * RELATÓRIOS (admin) — consolidação por evento com exportação CSV.
  */
 export const AdminRelatoriosPage: React.FC = () => {
-  const events = WeddingStorageService.getEvents();
-  const guests = WeddingStorageService.getGuests();
-  const couples = WeddingStorageService.getCouples();
+  const [events, setEvents] = React.useState<WeddingEvent[]>([]);
+  const [guests, setGuests] = React.useState<Guest[]>([]);
+  const [couples, setCouples] = React.useState<Couple[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [erro, setErro] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let activo = true;
+    (async () => {
+      try {
+        const [e, g, c] = await Promise.all([
+          getRepo().getEvents(),
+          getRepo().getGuests(),
+          getRepo().getCouples()
+        ]);
+        if (!activo) return;
+        setEvents(e);
+        setGuests(g);
+        setCouples(c);
+      } catch {
+        if (activo) setErro('Não foi possível carregar os relatórios. Tente novamente mais tarde.');
+      } finally {
+        if (activo) setLoading(false);
+      }
+    })();
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   const rows = events.map((ev) => {
     const list = guests.filter((g) => g.eventId === ev.id);
@@ -75,6 +102,14 @@ export const AdminRelatoriosPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  if (loading) {
+    return (
+      <div role="status" className="text-sm text-slate-500">
+        A carregar dados…
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -90,6 +125,12 @@ export const AdminRelatoriosPage: React.FC = () => {
           Exportar CSV
         </button>
       </div>
+
+      {erro && (
+        <p role="alert" className="text-xs text-red-600">
+          {erro}
+        </p>
+      )}
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[

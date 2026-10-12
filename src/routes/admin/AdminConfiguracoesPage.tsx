@@ -1,31 +1,59 @@
 import React from 'react';
-import { Save, RotateCcw, Settings2 } from 'lucide-react';
-import { WeddingStorageService } from '../../services/weddingStorage';
+import { Save, Settings2 } from 'lucide-react';
+import { getRepo, PlatformSettings } from '../../services/repo';
 import { useAuth } from '../../app/AuthContext';
 
 /**
- * CONFIGURAÇÕES (admin) — identidade da plataforma, contactos e manutenção.
+ * CONFIGURAÇÕES (admin) — identidade da plataforma e contactos.
  */
 export const AdminConfiguracoesPage: React.FC = () => {
   const { session } = useAuth();
-  const [settings, setSettings] = React.useState(() => WeddingStorageService.getSettings());
+  const [settings, setSettings] = React.useState<PlatformSettings | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [busy, setBusy] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
+  const [erro, setErro] = React.useState<string | null>(null);
 
-  const handleSave = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    let activo = true;
+    (async () => {
+      try {
+        const s = await getRepo().getSettings();
+        if (activo) setSettings(s);
+      } catch {
+        if (activo) setErro('Não foi possível carregar as definições. Tente novamente mais tarde.');
+      } finally {
+        if (activo) setLoading(false);
+      }
+    })();
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    WeddingStorageService.saveSettings(settings);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    if (!settings) return;
+    setBusy(true);
+    setErro(null);
+    try {
+      await getRepo().saveSettings(settings);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch {
+      setErro('Não foi possível guardar as definições. Tente novamente.');
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleReset = () => {
-    if (!confirm('Repor todos os dados de demonstração? As alterações locais serão perdidas.'))
-      return;
-    WeddingStorageService.resetToSeed();
-    setSettings(WeddingStorageService.getSettings());
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
+  if (loading || !settings) {
+    return (
+      <div role="status" className="text-sm text-slate-500">
+        A carregar dados…
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -78,13 +106,19 @@ export const AdminConfiguracoesPage: React.FC = () => {
           <div className="flex items-center gap-3 pt-3">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 px-5 py-2 text-xs font-medium text-white bg-slate-900 rounded-sm hover:bg-slate-800 cursor-pointer"
+              disabled={busy}
+              className="inline-flex items-center gap-2 px-5 py-2 text-xs font-medium text-white bg-slate-900 rounded-sm hover:bg-slate-800 cursor-pointer disabled:opacity-60"
             >
               <Save className="w-4 h-4" />
-              Guardar
+              {busy ? 'A guardar…' : 'Guardar'}
             </button>
             {saved && (
               <span className="text-xs text-emerald-700">Guardado com sucesso.</span>
+            )}
+            {erro && (
+              <span role="alert" className="text-xs text-red-600">
+                {erro}
+              </span>
             )}
           </div>
         </form>
@@ -95,20 +129,6 @@ export const AdminConfiguracoesPage: React.FC = () => {
         <p className="text-sm text-slate-500">
           {session?.email} · perfil {session?.role}
         </p>
-      </div>
-
-      <div className="bg-white border border-red-200 rounded-sm p-6">
-        <h2 className="text-sm font-semibold text-red-700 mb-1">Manutenção</h2>
-        <p className="text-sm text-slate-500 mb-4">
-          Repõe o estado inicial de demonstração (clientes, eventos, convidados e RSVPs).
-        </p>
-        <button
-          onClick={handleReset}
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-sm hover:bg-red-100 cursor-pointer"
-        >
-          <RotateCcw className="w-4 h-4" />
-          Repor dados de demonstração
-        </button>
       </div>
     </div>
   );
