@@ -137,20 +137,6 @@ const InvitationShell: React.FC<{
 }> = ({ event, guest, preview }) => {
   const [updatedGuest, setUpdatedGuest] = useState<Guest>(guest);
 
-  // Contagem de aberturas: só quando o convite abre a um convidado real.
-  // Pré-visualização do casal (rascunho) não conta. No modo anónimo o acesso
-  // já é registado pela RPC do servidor; aqui é um reforço best-effort que
-  // falha em silêncio se o convidado não tiver permissão de escrita.
-  useEffect(() => {
-    if (!preview) {
-      getRepo()
-        .recordAccess(guest.id)
-        .catch(() => {
-          /* sem efeito — acesso já registado ou sem permissão */
-        });
-    }
-  }, [guest.id, preview]);
-
   return (
     <>
       <InvitationExperience

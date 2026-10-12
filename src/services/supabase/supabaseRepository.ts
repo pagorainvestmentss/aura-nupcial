@@ -174,19 +174,6 @@ export const supabaseRepository: WeddingRepository = {
     return { event, guest, coupleStatus };
   },
 
-  async recordAccess(guestId: string): Promise<void> {
-    // Best-effort: no convite público a abertura já foi registada pela RPC
-    // `resolve_invitation`; aqui falharia (anónimo sem permissão) e cala-se.
-    try {
-      await db()
-        .from('guests')
-        .update({ accessed_at: new Date().toISOString() })
-        .eq('id', guestId);
-    } catch {
-      /* silencioso */
-    }
-  },
-
   async saveGuest(guest: Guest): Promise<void> {
     const { error } = await db().from('guests').upsert(guestToRow(guest), { onConflict: 'id' });
     if (error) throw new Error(`Não foi possível guardar o convidado: ${errMsg(error)}`);
