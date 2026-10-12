@@ -17,6 +17,21 @@ export interface PlatformSettings {
 
 export interface UpdateRsvpParams {
   guestId: string;
+  /**
+   * Token do convidado. No convite público (anónimo) não há sessão e o RLS
+   * bloqueia qualquer SELECT em `guests`; a RPC `submit_rsvp` identifica o
+   * convidado **só pelo token**, por isso ele é passado em vez de ser lido
+   * da base. Obrigatório no Supabase, ignorado no modo local.
+   */
+  guestToken?: string;
+  /**
+   * Convidado carregado pela RPC inicial (`resolve_invitation`). No modo
+   * Supabase ele é a base sobre a qual se projecta a resposta: a RPC do RSVP
+   * só devolve `{ ok, status }` e voltar a ler a linha falharia com o RLS.
+   * Guarda-se aqui o que não muda (nome, saudação, lugares) para a UI não
+   * perder a saudação personalizada depois de responder. Ignorado no local.
+   */
+  currentGuest?: Guest;
   rsvpStatus: RsvpStatus;
   confirmedGuests: number;
   notes?: string;

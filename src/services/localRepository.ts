@@ -49,7 +49,15 @@ export const localRepository: WeddingRepository = {
   saveGuest: (guest: Guest) => tick(WeddingStorageService.saveGuest(guest)),
   deleteGuest: (guestId: string) => tick(WeddingStorageService.deleteGuest(guestId)),
 
-  updateRsvp: (params: UpdateRsvpParams): Promise<UpdateRsvpResult> => tick(WeddingStorageService.updateRsvp(params)),
+  // O token e o convidado em memória só são usados pelo Supabase, onde o RLS
+  // impede a leitura; o local lê e escreve o localStorage à vontade.
+  updateRsvp: ({
+    guestId,
+    guestToken: _guestToken,
+    currentGuest: _currentGuest,
+    ...rest
+  }: UpdateRsvpParams): Promise<UpdateRsvpResult> =>
+    tick(WeddingStorageService.updateRsvp({ guestId, ...rest })),
   validateQrCheckIn: (input: string, scannedBy?: string): Promise<QrValidationResult> =>
     tick(WeddingStorageService.validateQrCheckIn(input, scannedBy)),
 
