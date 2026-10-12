@@ -45,7 +45,6 @@ export const localRepository: WeddingRepository = {
     const couple = event ? WeddingStorageService.getCoupleById(event.coupleId) : undefined;
     return { event, guest, coupleStatus: couple?.status };
   },
-  recordAccess: (guestId: string) => tick(WeddingStorageService.recordAccess(guestId)),
   saveGuest: (guest: Guest) => tick(WeddingStorageService.saveGuest(guest)),
   deleteGuest: (guestId: string) => tick(WeddingStorageService.deleteGuest(guestId)),
 

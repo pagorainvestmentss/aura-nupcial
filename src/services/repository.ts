@@ -88,7 +88,6 @@ export interface WeddingRepository {
     coupleSlug: string,
     token: string
   ): Promise<{ event?: WeddingEvent; guest?: Guest; coupleStatus?: ClientStatus }>;
-  recordAccess(guestId: string): Promise<void>;
   saveGuest(guest: Guest): Promise<void>;
   deleteGuest(guestId: string): Promise<void>;
 
