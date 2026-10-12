@@ -87,6 +87,10 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({
     try {
       const result = await getRepo().updateRsvp({
         guestId: guest.id,
+        // O convite público é anónimo: o token vem da abertura do convite e é
+        // ele que identifica o convidado na RPC (o RLS bloqueia SELECTs).
+        guestToken: guest.token,
+        currentGuest: guest,
         rsvpStatus: chosenStatus,
         confirmedGuests: actualConfirmedCount,
         notes,

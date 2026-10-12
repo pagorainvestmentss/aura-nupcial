@@ -199,15 +199,15 @@ export const supabaseRepository: WeddingRepository = {
 
   // --- RSVP ---------------------------------------------------------------
   async updateRsvp(params: UpdateRsvpParams): Promise<UpdateRsvpResult> {
-    const { data: gRow, error: gErr } = await db()
-      .from('guests')
-      .select('token')
-      .eq('id', params.guestId)
-      .maybeSingle();
-    if (gErr || !gRow) return { success: false };
+    // O convite público é anónimo: o RLS bloqueia qualquer SELECT em `guests`,
+    // por isso o token NUNCA é lido da base — vem da chamada inicial
+    // (`resolve_invitation`) e é passado pela UI. A RPC identifica o convidado
+    // só pelo token e faz o UPDATE inteiro dentro de SECURITY DEFINER.
+    const token = params.guestToken?.trim();
+    if (!token) return { success: false };
 
     const { data, error } = await db().rpc('submit_rsvp', {
-      p_token: (gRow as { token: string }).token,
+      p_token: token,
       p_status: params.rsvpStatus,
       p_confirmed_guests: params.confirmedGuests,
       p_notes: params.notes ?? null,
@@ -224,8 +224,34 @@ export const supabaseRepository: WeddingRepository = {
       return { success: false };
     }
 
-    const { data: fresh } = await db().from('guests').select('*').eq('id', params.guestId).maybeSingle();
-    return { success: true, guest: fresh ? rowToGuest(fresh as GuestRow) : undefined };
+    // A RPC só devolve { ok, status } e voltar a ler o convidado falharia com
+    // o mesmo RLS. Projecta-se a resposta sobre o convidado já carregado, para
+    // a UI não perder o nome, a saudação personalizada nem os lugares.
+    const base = params.currentGuest;
+    const next: Guest = {
+      id: params.guestId,
+      eventId: base?.eventId ?? '',
+      name: base?.name ?? '',
+      salutationType: base?.salutationType ?? 'individual',
+      customSalutation: base?.customSalutation,
+      relationship: base?.relationship,
+      phone: base?.phone,
+      token,
+      maxGuests: base?.maxGuests ?? 1,
+      confirmedGuests: params.confirmedGuests,
+      rsvpStatus: params.rsvpStatus,
+      rsvpDate: new Date().toISOString(),
+      rsvpNotes: params.notes ?? '',
+      dietaryRestrictions: params.dietaryRestrictions ?? '',
+      companions: params.rsvpStatus === 'confirmed' ? (params.companions ?? []) : [],
+      group: params.group ?? '',
+      accessedAt: base?.accessedAt,
+      accessCount: base?.accessCount ?? 0,
+      qrStatus: base?.qrStatus ?? 'active',
+      qrScannedAt: base?.qrScannedAt,
+      qrScannedBy: base?.qrScannedBy
+    };
+    return { success: true, guest: next };
   },
 
   // --- QR -----------------------------------------------------------------
