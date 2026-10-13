@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { WeddingEvent, Guest, ColorPalette } from '../../types/wedding';
 import { BotanicalWreath, BotanicalDivider } from '../common/BotanicalFlourish';
+import { displayMonogram } from '../../data/occasions';
 import QRCode from 'qrcode';
 import { QrCode, CheckCircle2, AlertCircle } from 'lucide-react';
 import { SmartImage } from '../motion/SmartImage';
@@ -51,7 +52,7 @@ export const FinalCtaAndQrSection: React.FC<FinalCtaAndQrSectionProps> = ({
             className="font-serif text-2xl font-light tracking-widest"
             style={{ color: palette.accent }}
           >
-            {event.monogram.replace('&', '+')}
+            {displayMonogram(event)}
           </span>
         </BotanicalWreath>
 

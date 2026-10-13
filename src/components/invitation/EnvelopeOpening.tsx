@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { WeddingEvent, Guest, ColorPalette } from '../../types/wedding';
 import { BotanicalCorner, WaxSealButton } from '../common/BotanicalFlourish';
-import { getOccasion, eventNames } from '../../data/occasions';
+import { getOccasion, eventNames, displayMonogram } from '../../data/occasions';
 
 interface EnvelopeOpeningProps {
   event: WeddingEvent;
@@ -99,7 +99,7 @@ export const EnvelopeOpening: React.FC<EnvelopeOpeningProps> = ({
         {/* Center: Wax Seal & Interactive Trigger */}
         <div className="relative z-10 flex flex-col items-center my-auto py-2">
           <WaxSealButton
-            monogram={event.monogram}
+            monogram={displayMonogram(event)}
             sealColor={palette.sealColor}
             onClick={handleOpen}
           />

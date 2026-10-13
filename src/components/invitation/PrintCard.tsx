@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { WeddingEvent, Guest, ColorPalette } from '../../types/wedding';
 import { COLOR_PALETTES } from '../../data/palettes';
-import { eventNames, formalPhrase, fallbackNames } from '../../data/occasions';
+import { eventNames, formalPhrase, fallbackNames, displayMonogram } from '../../data/occasions';
 import { BotanicalCorner, BotanicalDivider, BotanicalWreath } from '../common/BotanicalFlourish';
 
 interface PrintCardProps {
@@ -112,7 +112,7 @@ export const PrintCard: React.FC<PrintCardProps> = ({ event, guest }) => {
         {/* Selo / monograma */}
         <BotanicalWreath color={palette.accent} size={72} className="mb-3">
           <span className="font-serif text-sm font-semibold tracking-widest" style={{ color: palette.accent }}>
-            {event.monogram.replace('&', '+')}
+            {displayMonogram(event)}
           </span>
         </BotanicalWreath>
 

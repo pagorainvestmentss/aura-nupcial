@@ -1,7 +1,7 @@
 import React from 'react';
 import { WeddingEvent, ColorPalette } from '../../types/wedding';
 import { BotanicalCorner, BotanicalDivider } from '../common/BotanicalFlourish';
-import { getOccasion, eventNames } from '../../data/occasions';
+import { getOccasion, eventNames, displayMonogram } from '../../data/occasions';
 
 interface SaveTheDateSectionProps {
   event: WeddingEvent;
@@ -63,7 +63,7 @@ export const SaveTheDateSection: React.FC<SaveTheDateSectionProps> = ({
           style={{ borderColor: palette.goldAccent, color: palette.accent }}
         >
           <span className="font-serif text-sm font-semibold tracking-widest">
-            {event.monogram.replace('&', '+')}
+            {displayMonogram(event)}
           </span>
         </div>
 

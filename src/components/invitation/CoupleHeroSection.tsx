@@ -1,7 +1,7 @@
 import React from 'react';
 import { WeddingEvent, ColorPalette } from '../../types/wedding';
 import { BotanicalWreath, BotanicalDivider } from '../common/BotanicalFlourish';
-import { eventNames } from '../../data/occasions';
+import { eventNames, displayMonogram } from '../../data/occasions';
 import { SmartImage } from '../motion/SmartImage';
 
 interface CoupleHeroSectionProps {
@@ -26,7 +26,7 @@ export const CoupleHeroSection: React.FC<CoupleHeroSectionProps> = ({
             className="font-serif text-3xl font-normal tracking-widest select-none"
             style={{ color: palette.accent }}
           >
-            {event.monogram.replace('&', '+')}
+            {displayMonogram(event)}
           </span>
         </BotanicalWreath>
       </div>
@@ -96,7 +96,7 @@ export const CoupleHeroSection: React.FC<CoupleHeroSectionProps> = ({
                 className="font-serif text-4xl tracking-widest select-none"
                 style={{ color: palette.accent }}
               >
-                {event.monogram || names}
+                {displayMonogram(event) || names}
               </span>
               <h3 className="font-script text-3xl" style={{ color: palette.primaryText }}>
                 {names}
