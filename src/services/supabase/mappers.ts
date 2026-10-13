@@ -6,6 +6,9 @@ import type {
   Guest,
   GuestManualItem,
   OccasionId,
+  PaymentRequest,
+  PaymentRequestKind,
+  PaymentRequestStatus,
   PaymentStatus,
   PlanId,
   QrStatus,
@@ -96,6 +99,20 @@ export interface GuestRow {
   qr_scanned_by: string | null;
   companions: string[] | null;
   group_name: string | null;
+}
+
+export interface PaymentRequestRow {
+  id: string;
+  couple_id: string;
+  plan: string;
+  kind: string;
+  amount_kz: number;
+  reference: string;
+  status: string;
+  created_at: string;
+  paid_at: string | null;
+  confirmed_by: string | null;
+  notes: string | null;
 }
 
 // --- helpers ---
@@ -286,5 +303,35 @@ export function guestToRow(g: Guest): Partial<GuestRow> {
     qr_status: g.qrStatus,
     qr_scanned_at: g.qrScannedAt || null,
     qr_scanned_by: g.qrScannedBy || null
+  };
+}
+
+// --- payment requests ---
+
+export function rowToPaymentRequest(r: PaymentRequestRow): PaymentRequest {
+  return {
+    id: r.id,
+    coupleId: r.couple_id,
+    plan: (r.plan as PlanId) ?? 'starter',
+    kind: (r.kind as PaymentRequestKind) ?? 'initial',
+    amountKz: r.amount_kz ?? 0,
+    reference: r.reference,
+    status: (r.status as PaymentRequestStatus) ?? 'pending',
+    createdAt: r.created_at,
+    paidAt: asText(r.paid_at) || undefined,
+    confirmedBy: asText(r.confirmed_by) || undefined,
+    notes: asText(r.notes) || undefined
+  };
+}
+
+export function paymentRequestToRow(p: PaymentRequest): Partial<PaymentRequestRow> {
+  return {
+    id: p.id,
+    couple_id: p.coupleId,
+    plan: p.plan,
+    kind: p.kind,
+    amount_kz: p.amountKz,
+    reference: p.reference,
+    status: p.status
   };
 }

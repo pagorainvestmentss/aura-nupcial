@@ -57,7 +57,7 @@ npm run build    # produção
 | `/criar` | `CriarContaPage` | Passo 1 ocasião + Passo 2 conta (email + WhatsApp, sem password); `?ocasiao=X&plano=Y` pré-seleciona |
 | `/como-funciona` | `ComoFuncionaPage` | Processo em 4 passos |
 | `/exemplos` | `ExemplosPage` | Galeria de convites reais |
-| `/pacotes` | `PacotesPage` | Preços (Essential 85.000 Kz · Pro 150.000 Kz) → `/criar?plano=` |
+| `/pacotes` | `PacotesPage` | Preços (Starter 45.000 Kz · Pro 120.000 Kz · Premium 200.000 Kz) → `/criar?plano=` |
 | `/faq` | `FaqPage` | Perguntas frequentes |
 | `/contacto` | `ContactoPage` | Formulário / WhatsApp `wa.me/244940989328` |
 | `/adquirir` | `AdquirirPage` | Seletor de ocasião + planos + CTA |
@@ -75,7 +75,7 @@ npm run build    # produção
 | `/admin/rsvp` | `AdminRsvpPage` | RSVP global com filtros + export CSV |
 | `/admin/qr-checkin` | `AdminQrCheckinPage` | Terminal de validação de passes |
 | `/admin/templates` | `AdminTemplatesPage` | 4 templates + atribuição a eventos |
-| `/admin/pagamentos` | `AdminPagamentosPage` | Estado de pagamento por cliente |
+| `/admin/pagamentos` | `AdminPagamentosPage` | Pedidos de pagamento (referência + confirmação auditada) e estado por cliente |
 | `/admin/relatorios` | `AdminRelatoriosPage` | Relatórios por evento + CSV |
 | `/admin/configuracoes` | `AdminConfiguracoesPage` | Definições da plataforma, reset de dados demo |
 | `*` | redirect → `/admin` | |
@@ -143,8 +143,12 @@ npm run build    # produção
 / ou /adquirir → escolhe ocasião (casamento · noivado · aniversário · outra)
   → /criar?ocasiao=X&plano=Y → conta (email + WhatsApp, sem password)
       cria Couple(plan, paymentStatus:'pending') + WeddingEvent(occasion, slug, draft)
-  → /cliente (Primeiros passos + seletor de pacote; Essential limita 80 convidados)
-  → admin confirma pagamento  → couple.paymentStatus='paid'
+  → /cliente (Primeiros passos + seletor de pacote; Starter limita 30 convidados)
+  → cliente gera pedido de pagamento (referência AURA-XXXX, valor do plano)
+      paga por IBAN ou Multicaixa Express e envia comprovativo por WhatsApp
+  → admin confirma pedido em /admin/pagamentos
+      → payment_requests.status='paid' + couple.paymentStatus='paid'
+        (activa pendingPlan quando é upgrade)
   → cliente publica            → event.status='active'   [GATE: exige paid]
   → link /convite/:slug/:token funciona para convidados
 ```
@@ -178,7 +182,9 @@ draft ──publicar──▶ active ──suspender──▶ suspended
   └── convite mostra "indisponível" ─────────┘
 
 GATE de publicação: publicar exige couple.paymentStatus === 'paid'
-(Admin: botão "Confirmar pagamento" em /admin/pagamentos).
+(Admin: confirma pedidos em /admin/pagamentos — confirmação auditada com
+referência, data e email de quem confirmou; o casal NÃO se pode auto-confirmar
+— trigger enforce_couples_commercial_guard em produção, RLS + UI no modo local).
 Visitante + evento draft/suspended ou casal suspenso → InvalidInvitation.
 ```
 
@@ -198,9 +204,15 @@ Couple (1) ──── (N) WeddingEvent (1) ──── (N) Guest
    │                    ├── declarations{}          → declarações dos noivos
    │                    ├── gallery[]               → fotos
    │                    └── guestManual[]           → manual do convidado
-   └── plan, status, paymentStatus, password (opcional)
+   ├── plan, status, paymentStatus, pendingPlan?, password (opcional)
+   └── (N) PaymentRequest
+           ├── reference (AURA-XXXX, única) · amountKz · plan · kind
+           │   (initial | upgrade)
+           ├── status (pending | paid | cancelled)
+           └── createdAt, paidAt?, confirmedBy?   → auditoria da confirmação
 
-PlatformSettings (singleton) → nome da marca, email, telefone
+PlatformSettings (singleton) → nome da marca, email, telefone,
+                               dados de pagamento (IBAN, MCX Express, titular)
 AuthSession (em memória)     → role, email, displayName, coupleId?
 ```
 
@@ -388,7 +400,11 @@ guests          (id, event_id → events, name, salutation_type, custom_salutati
                  confirmed_guests, rsvp_status, rsvp_date, rsvp_notes,
                  dietary_restrictions, accessed_at, access_count,
                  qr_status, qr_scanned_at, qr_scanned_by)
-platform_settings (id=1, brand_name, support_email, support_phone)
+platform_settings (id=1, brand_name, support_email, support_phone,
+                   payment_iban?, payment_mcx_phone?, payment_holder_name?)
+payment_requests (id uuid PK, couple_id → couples, plan, kind, amount_kz,
+                  reference UNIQUE, status, created_at, paid_at?,
+                  confirmed_by?, notes?)   -- pedidos de pagamento (Fase 0)
 rsvp_events     (opcional — auditoria de respostas/alterações)
 ```
 
@@ -397,11 +413,15 @@ rsvp_events     (opcional — auditoria de respostas/alterações)
 | Tabela | `admin` | `cliente` | `convidado`/público |
 |--------|---------|-----------|---------------------|
 | `profiles` | CRUD total | SELECT do próprio | — |
-| `couples` | CRUD | SELECT/UPDATE do próprio | — |
+| `couples` | CRUD | SELECT/UPDATE do próprio* | — |
 | `events` | CRUD | SELECT/UPDATE **apenas** `couple_id = sessão.couple_id` | SELECT apenas `status='active'` (via RPC pública) |
 | `guests` | CRUD | CRUD apenas dos eventos do casal | — (acesso por RPC com token) |
 | `platform_settings` | CRUD | SELECT | — |
+| `payment_requests` | CRUD total (confirmação/cancelamento auditados) | SELECT + INSERT dos próprios (apenas `status='pending'`) | — |
 
+> *Trigger `enforce_couples_commercial_guard` (migração payment_requests): o UPDATE do
+> casal não pode mudar `payment_status`, não pode elevar `plan` (só manter/descer) e
+> `pending_plan` só pode ser NULL ou um nível superior — fecha a lacuna de auto-confirmação.
 > O frontend nunca confia no `coupleId` do cliente: o RLS usa `auth.uid()` → `profiles` → `couples`.
 
 ### 9.4 RPCs públicas (security definer, sem sessão)

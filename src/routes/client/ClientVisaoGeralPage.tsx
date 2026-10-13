@@ -16,8 +16,9 @@ import {
 import { useClientEvent } from './useClientEvent';
 import { getRepo } from '../../services/repo';
 import { eventNames, getOccasion } from '../../data/occasions';
-import { planGuestLimitLabel, PLAN_LABEL, PLAN_GUEST_LIMIT, isUpgrade } from '../../data/site';
-import { PlanId } from '../../types/wedding';
+import { planGuestLimitLabel, PLAN_LABEL, PLAN_GUEST_LIMIT, PLAN_PRICE_KZ, formatKz, isUpgrade, whatsappLink } from '../../data/site';
+import { PaymentRequest, PlanId } from '../../types/wedding';
+import { PlatformSettings } from '../../services/repository';
 import { Reveal } from '../../components/motion/Reveal';
 
 /**
@@ -28,7 +29,26 @@ export const ClientVisaoGeralPage: React.FC = () => {
   const { couple, event, guests, loading } = useClientEvent(version);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [requests, setRequests] = React.useState<PaymentRequest[]>([]);
+  const [settings, setSettings] = React.useState<PlatformSettings | null>(null);
+  const [copied, setCopied] = React.useState(false);
   const refresh = () => setVersion((v) => v + 1);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    if (!couple) return;
+    getRepo()
+      .getPaymentRequests(couple.id)
+      .then((r) => !cancelled && setRequests(r))
+      .catch(() => {});
+    getRepo()
+      .getSettings()
+      .then((s) => !cancelled && setSettings(s))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [couple?.id, version]);
 
   const confirmed = guests.filter((g) => g.rsvpStatus === 'confirmed');
   const declined = guests.filter((g) => g.rsvpStatus === 'declined');
@@ -42,16 +62,52 @@ export const ClientVisaoGeralPage: React.FC = () => {
     const sameRankOrHigher = plan === couple.plan || isUpgrade(plan, couple.plan);
     if (!upgrade && sameRankOrHigher) return;
     const msg = upgrade
-      ? `Pedir o upgrade para o plano ${PLAN_LABEL[plan]} (${planGuestLimitLabel(plan)})? O pagamento é confirmado pela equipa — o plano só muda depois de aprovado.`
+      ? `Pedir o upgrade para o plano ${PLAN_LABEL[plan]} (${planGuestLimitLabel(plan)})? Vamos gerar um pedido de pagamento pela diferença — assim que a equipa confirmar, o plano é actualizado.`
       : `Mudar para o plano ${PLAN_LABEL[plan]} (${planGuestLimitLabel(plan)})?`;
     if (!confirm(msg)) return;
     setBusy(true);
     setError(null);
     try {
       await getRepo().requestPlanChange(couple.id, plan);
+      if (upgrade) {
+        const alreadyRequested = requests.some(
+          (r) => r.status === 'pending' && r.kind === 'upgrade' && r.plan === plan
+        );
+        if (!alreadyRequested) {
+          await getRepo().createPaymentRequest({
+            coupleId: couple.id,
+            plan,
+            kind: 'upgrade',
+            amountKz: PLAN_PRICE_KZ[plan] - PLAN_PRICE_KZ[couple.plan]
+          });
+        }
+      }
       refresh();
     } catch {
       setError('Não foi possível pedir a mudança de plano. Verifique a sua ligação e tente de novo.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const createInitialRequest = async () => {
+    if (!couple) return;
+    const alreadyRequested = requests.some(
+      (r) => r.status === 'pending' && r.kind === 'initial' && r.plan === couple.plan
+    );
+    if (alreadyRequested) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await getRepo().createPaymentRequest({
+        coupleId: couple.id,
+        plan: couple.plan,
+        kind: 'initial',
+        amountKz: PLAN_PRICE_KZ[couple.plan]
+      });
+      refresh();
+    } catch {
+      setError('Não foi possível gerar o pedido de pagamento. Verifique a sua ligação e tente de novo.');
     } finally {
       setBusy(false);
     }
@@ -124,7 +180,7 @@ export const ClientVisaoGeralPage: React.FC = () => {
       title: 'Confirmar o pagamento',
       hint: paid
         ? 'Pagamento confirmado — pode publicar.'
-        : 'Assim que a equipa confirmar, desbloqueamos a publicação.',
+        : 'Gere o pedido de pagamento abaixo e envie o comprovativo por WhatsApp.',
       to: null,
       icon: CreditCard
     },
@@ -318,11 +374,12 @@ export const ClientVisaoGeralPage: React.FC = () => {
                   {planGuestLimitLabel(p)}
                 </p>
                 <p className="text-[11px] text-stone-400 font-sans mt-1">
+                  {formatKz(PLAN_PRICE_KZ[p])} Kz ·{' '}
                   {p === 'starter'
-                    ? '45.000 Kz · RSVP e envio por WhatsApp'
+                    ? 'RSVP e envio por WhatsApp'
                     : p === 'pro'
-                      ? '120.000 Kz · + QR Code, música e relatórios'
-                      : '200.000 Kz · + ilimitado e tudo desbloqueado'}
+                      ? 'QR Code, música e relatórios'
+                      : 'tudo desbloqueado'}
                 </p>
               </button>
             );
@@ -334,19 +391,120 @@ export const ClientVisaoGeralPage: React.FC = () => {
             confirmar o pagamento, o plano é actualizado e os benefícios são desbloqueados.
           </p>
         )}
-        {!paid && (
-          <p className="text-[11px] text-stone-500 font-sans mt-3 leading-relaxed">
-            Depois de escolher o plano, efectue o pagamento e a nossa equipa confirma —
-            só então o convite pode ser publicado. Dúvidas?{' '}
-            <a
-              href="https://wa.me/244940989328"
-              target="_blank"
-              rel="noreferrer"
-              className="text-[#5E6B56] hover:underline"
-            >
-              Fale connosco por WhatsApp
-            </a>
-            .
+
+        {/* Painel de pagamento */}
+        {!paid ? (
+          <div className="mt-4 border-t border-stone-200 pt-4">
+            {(() => {
+              const pendingRequest = requests.find(
+                (r) => r.status === 'pending' && r.plan === (couple.pendingPlan ?? couple.plan)
+              );
+              if (!pendingRequest) {
+                return (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs text-stone-500 font-sans">
+                      Gere um pedido de pagamento com referência única — pague por IBAN ou
+                      Multicaixa Express e envie o comprovativo por WhatsApp.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={createInitialRequest}
+                      disabled={busy}
+                      className="inline-flex items-center gap-2 text-xs font-sans font-medium text-white bg-[#5E6B56] border border-[#5E6B56] rounded-sm px-4 py-2 hover:bg-[#4E5B46] transition-colors cursor-pointer disabled:opacity-60"
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      Gerar pedido de pagamento
+                    </button>
+                  </div>
+                );
+              }
+              const message =
+                `Olá! Acabei de gerar o pedido de pagamento na Aura Nupcial.\n` +
+                `Referência: ${pendingRequest.reference}\n` +
+                `Plano: ${PLAN_LABEL[pendingRequest.plan]}${pendingRequest.kind === 'upgrade' ? ' (upgrade)' : ''}\n` +
+                `Valor: ${formatKz(pendingRequest.amountKz)} Kz\n` +
+                `Cliente: ${names || '—'}\n` +
+                `Vou enviar o comprovativo por aqui. Obrigado(a)!`;
+              const copyReference = async () => {
+                try {
+                  await navigator.clipboard.writeText(pendingRequest.reference);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                } catch {
+                  /* clipboard indisponível */
+                }
+              };
+              return (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="inline-flex items-center gap-2 bg-[#FAF7F2] border border-stone-200 rounded-sm px-3 py-2">
+                      <span className="text-[10px] uppercase tracking-widest text-stone-400 font-sans">
+                        Referência
+                      </span>
+                      <span className="text-sm font-mono font-semibold text-stone-900">
+                        {pendingRequest.reference}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={copyReference}
+                        className="text-[11px] font-sans text-[#5E6B56] hover:underline cursor-pointer"
+                      >
+                        {copied ? 'Copiada!' : 'Copiar'}
+                      </button>
+                    </span>
+                    <span className="text-sm font-serif text-stone-900">
+                      {formatKz(pendingRequest.amountKz)} Kz
+                    </span>
+                    <span className="text-[11px] text-stone-400 font-sans">
+                      {pendingRequest.kind === 'upgrade' ? 'Upgrade' : 'Plano inicial'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-stone-600 font-sans space-y-1">
+                    {settings?.paymentIban ? (
+                      <p>
+                        <span className="text-stone-400">IBAN:</span>{' '}
+                        <span className="font-mono">{settings.paymentIban}</span>
+                      </p>
+                    ) : null}
+                    {settings?.paymentMcxPhone ? (
+                      <p>
+                        <span className="text-stone-400">Multicaixa Express:</span>{' '}
+                        <span className="font-mono">{settings.paymentMcxPhone}</span>
+                      </p>
+                    ) : null}
+                    {settings?.paymentHolderName ? (
+                      <p>
+                        <span className="text-stone-400">Titular:</span>{' '}
+                        {settings.paymentHolderName}
+                      </p>
+                    ) : null}
+                    {!settings?.paymentIban && !settings?.paymentMcxPhone ? (
+                      <p>
+                        Os dados de pagamento serão mostrados aqui assim que forem
+                        configurados — contacte-nos por WhatsApp para os receber.
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <a
+                      href={whatsappLink(message)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 text-xs font-sans font-medium text-white bg-[#5E6B56] border border-[#5E6B56] rounded-sm px-4 py-2 hover:bg-[#4E5B46] transition-colors"
+                    >
+                      Enviar comprovativo por WhatsApp
+                    </a>
+                    <span className="text-[11px] text-stone-400 font-sans">
+                      Assim que a equipa confirmar, o plano é activado.
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        ) : (
+          <p className="text-[11px] text-emerald-700 font-sans mt-4 leading-relaxed">
+            Pagamento confirmado — o convite pode ser publicado quando quiser.
           </p>
         )}
       </div>

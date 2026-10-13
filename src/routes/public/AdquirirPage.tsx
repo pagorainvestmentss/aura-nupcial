@@ -2,10 +2,11 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, ArrowRight } from 'lucide-react';
 import { OccasionPicker } from '../../components/public/OccasionPicker';
+import { PLAN_PRICE_KZ, formatKz } from '../../data/site';
 import { OccasionId } from '../../types/wedding';
 
 const POINTS = [
-  'A partir de 85.000 Kz — pagamento único',
+  `A partir de ${formatKz(PLAN_PRICE_KZ.starter)} Kz — pagamento único`,
   'Conta em segundos: email e WhatsApp',
   'Você preenche o convite no seu painel, no seu ritmo',
   'Convidado nunca precisa de conta'

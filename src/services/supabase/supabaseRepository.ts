@@ -1,9 +1,23 @@
-import type { ClientStatus, Couple, EventStatus, Guest, PaymentStatus, PlanId, WeddingEvent } from '../../types/wedding';
+import type { ClientStatus, Couple, EventStatus, Guest, PaymentRequest, PaymentRequestKind, PaymentRequestStatus, PaymentStatus, PlanId, WeddingEvent } from '../../types/wedding';
 import { extractQrToken } from '../weddingStorage';
 import { isUpgrade } from '../../data/site';
-import type { PlatformSettings, QrValidationResult, UpdateRsvpParams, UpdateRsvpResult, WeddingRepository } from '../repository';
+import { generatePaymentReference } from '../../utils/reference';
+import type { CreatePaymentRequestParams, PlatformSettings, QrValidationResult, UpdateRsvpParams, UpdateRsvpResult, WeddingRepository } from '../repository';
 import { getSupabase } from './client';
-import { coupleToRow, eventToRow, guestToRow, rowToCouple, rowToEvent, rowToGuest, type CoupleRow, type EventRow, type GuestRow } from './mappers';
+import {
+  coupleToRow,
+  eventToRow,
+  guestToRow,
+  paymentRequestToRow,
+  rowToCouple,
+  rowToEvent,
+  rowToGuest,
+  rowToPaymentRequest,
+  type CoupleRow,
+  type EventRow,
+  type GuestRow,
+  type PaymentRequestRow
+} from './mappers';
 import {
   cleanupRemovedPhotos,
   removeEventFolder,
@@ -118,6 +132,70 @@ export const supabaseRepository: WeddingRepository = {
     }
     // Downgrade ou cancelamento de um pedido pendente.
     await this.saveCouple({ ...couple, plan, pendingPlan: null });
+  },
+
+  // --- Pedidos de pagamento (Fase 0) ---------------------------------------
+  async createPaymentRequest(params: CreatePaymentRequestParams): Promise<PaymentRequest> {
+    const supabase = db();
+    // Referência gerada no cliente; em caso de colisão (23505) tenta outra vez.
+    for (let attempt = 0; ; attempt++) {
+      const row: Omit<PaymentRequestRow, 'paid_at' | 'confirmed_by' | 'notes' | 'created_at'> & { created_at?: string } = {
+        id: crypto.randomUUID(),
+        couple_id: params.coupleId,
+        plan: params.plan,
+        kind: params.kind,
+        amount_kz: params.amountKz,
+        reference: generatePaymentReference(),
+        status: 'pending'
+      };
+      const { data, error } = await supabase
+        .from('payment_requests')
+        .insert(row)
+        .select('*')
+        .single();
+      if (!error && data) return rowToPaymentRequest(data as PaymentRequestRow);
+      const code = (error as { code?: string } | null)?.code;
+      if (code !== '23505' || attempt >= 2) {
+        throw new Error(`Não foi possível criar o pedido de pagamento: ${errMsg(error)}`);
+      }
+    }
+  },
+
+  async getPaymentRequests(coupleId?: string): Promise<PaymentRequest[]> {
+    let query = db().from('payment_requests').select('*');
+    if (coupleId) query = query.eq('couple_id', coupleId);
+    const { data, error } = await query.order('created_at', { ascending: false });
+    if (error) throw new Error(`Não foi possível carregar os pedidos de pagamento: ${errMsg(error)}`);
+    return ((data ?? []) as PaymentRequestRow[]).map(rowToPaymentRequest);
+  },
+
+  async setPaymentRequestStatus(
+    requestId: string,
+    status: Exclude<PaymentRequestStatus, 'pending'>,
+    confirmedBy?: string
+  ): Promise<void> {
+    const supabase = db();
+    const { data: request, error: fetchError } = await supabase
+      .from('payment_requests')
+      .select('*')
+      .eq('id', requestId)
+      .maybeSingle();
+    if (fetchError || !request) {
+      throw new Error('Pedido de pagamento não encontrado.');
+    }
+    const row = request as PaymentRequestRow;
+    if (row.status !== 'pending') return; // já processado — idempotente
+
+    const patch: Partial<PaymentRequestRow> =
+      status === 'paid'
+        ? { status, paid_at: new Date().toISOString(), confirmed_by: confirmedBy ?? null }
+        : { status };
+    const { error } = await supabase.from('payment_requests').update(patch).eq('id', requestId);
+    if (error) throw new Error(`Não foi possível actualizar o pedido: ${errMsg(error)}`);
+
+    if (status === 'paid') {
+      await this.setPaymentStatus(row.couple_id, 'paid');
+    }
   },
 
   // --- Eventos ------------------------------------------------------------
@@ -311,11 +389,21 @@ export const supabaseRepository: WeddingRepository = {
     if (error || !data) {
       return { brandName: 'Aura Nupcial', supportEmail: 'ola@auranupcial.com', supportPhone: '+244 923 000 000' };
     }
-    const row = data as { brand_name?: string; support_email?: string; support_phone?: string };
+    const row = data as {
+      brand_name?: string;
+      support_email?: string;
+      support_phone?: string;
+      payment_iban?: string;
+      payment_mcx_phone?: string;
+      payment_holder_name?: string;
+    };
     return {
       brandName: row.brand_name || 'Aura Nupcial',
       supportEmail: row.support_email || 'ola@auranupcial.com',
-      supportPhone: row.support_phone || '+244 923 000 000'
+      supportPhone: row.support_phone || '+244 923 000 000',
+      paymentIban: row.payment_iban || undefined,
+      paymentMcxPhone: row.payment_mcx_phone || undefined,
+      paymentHolderName: row.payment_holder_name || undefined
     };
   },
 
@@ -323,7 +411,15 @@ export const supabaseRepository: WeddingRepository = {
     const { error } = await db()
       .from('platform_settings')
       .upsert(
-        { id: 1, brand_name: settings.brandName, support_email: settings.supportEmail, support_phone: settings.supportPhone },
+        {
+          id: 1,
+          brand_name: settings.brandName,
+          support_email: settings.supportEmail,
+          support_phone: settings.supportPhone,
+          payment_iban: settings.paymentIban || null,
+          payment_mcx_phone: settings.paymentMcxPhone || null,
+          payment_holder_name: settings.paymentHolderName || null
+        },
         { onConflict: 'id' }
       );
     if (error) throw new Error(`Não foi possível guardar as definições: ${errMsg(error)}`);

@@ -3,6 +3,9 @@ import type {
   Couple,
   EventStatus,
   Guest,
+  PaymentRequest,
+  PaymentRequestKind,
+  PaymentRequestStatus,
   PaymentStatus,
   PlanId,
   RsvpStatus,
@@ -13,6 +16,16 @@ export interface PlatformSettings {
   brandName: string;
   supportEmail: string;
   supportPhone: string;
+  paymentIban?: string;
+  paymentMcxPhone?: string;
+  paymentHolderName?: string;
+}
+
+export interface CreatePaymentRequestParams {
+  coupleId: string;
+  plan: PlanId;
+  kind: PaymentRequestKind;
+  amountKz: number;
 }
 
 export interface UpdateRsvpParams {
@@ -72,6 +85,20 @@ export interface WeddingRepository {
   setClientStatus(coupleId: string, status: ClientStatus): Promise<void>;
   setPaymentStatus(coupleId: string, paymentStatus: PaymentStatus): Promise<void>;
   requestPlanChange(coupleId: string, plan: PlanId): Promise<void>;
+
+  // Pedidos de pagamento (Fase 0)
+  createPaymentRequest(params: CreatePaymentRequestParams): Promise<PaymentRequest>;
+  /** Todos os pedidos (admin) ou só os de um casal (cliente). */
+  getPaymentRequests(coupleId?: string): Promise<PaymentRequest[]>;
+  /**
+   * Confirma (`paid`) ou cancela um pedido. A confirmação marca também o casal
+   * como pago (activando `pendingPlan` quando exista) — auditar `confirmedBy`.
+   */
+  setPaymentRequestStatus(
+    requestId: string,
+    status: Exclude<PaymentRequestStatus, 'pending'>,
+    confirmedBy?: string
+  ): Promise<void>;
 
   // Eventos
   getEvents(): Promise<WeddingEvent[]>;

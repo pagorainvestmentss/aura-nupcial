@@ -463,6 +463,105 @@ describe('planos (requestPlanChange + pagamento)', () => {
   });
 });
 
+describe('pedidos de pagamento (Fase 0)', () => {
+  it('cria pedido pendente com referência AURA-XXXX', () => {
+    const pedido = WeddingStorageService.createPaymentRequest({
+      coupleId: 'couple-sofia-andre',
+      plan: 'starter',
+      kind: 'initial',
+      amountKz: 45000
+    });
+
+    expect(pedido.status).toBe('pending');
+    expect(pedido.reference).toMatch(/^AURA-[A-Z2-9]{4}$/);
+    expect(pedido.amountKz).toBe(45000);
+    expect(WeddingStorageService.getPaymentRequests('couple-sofia-andre')).toHaveLength(1);
+  });
+
+  it('filtros por casal devolvem só os seus pedidos', () => {
+    WeddingStorageService.createPaymentRequest({
+      coupleId: 'couple-sofia-andre',
+      plan: 'starter',
+      kind: 'initial',
+      amountKz: 45000
+    });
+    WeddingStorageService.createPaymentRequest({
+      coupleId: 'couple-joana-miguel',
+      plan: 'pro',
+      kind: 'initial',
+      amountKz: 120000
+    });
+
+    expect(WeddingStorageService.getPaymentRequests('couple-sofia-andre')).toHaveLength(1);
+    expect(WeddingStorageService.getPaymentRequests('couple-joana-miguel')).toHaveLength(1);
+    expect(WeddingStorageService.getPaymentRequests()).toHaveLength(2);
+  });
+
+  it('confirmar pedido marca pedido e casal como pagos e activa o upgrade pendente', () => {
+    WeddingStorageService.requestPlanChange('couple-sofia-andre', 'pro');
+    const pedido = WeddingStorageService.createPaymentRequest({
+      coupleId: 'couple-sofia-andre',
+      plan: 'pro',
+      kind: 'upgrade',
+      amountKz: 75000
+    });
+
+    WeddingStorageService.setPaymentRequestStatus(pedido.id, 'paid', 'admin@auranupcial.com');
+
+    const depois = WeddingStorageService.getPaymentRequests('couple-sofia-andre').find(
+      (r) => r.id === pedido.id
+    )!;
+    expect(depois.status).toBe('paid');
+    expect(depois.paidAt).toBeTruthy();
+    expect(depois.confirmedBy).toBe('admin@auranupcial.com');
+
+    const casal = WeddingStorageService.getCoupleById('couple-sofia-andre')!;
+    expect(casal.paymentStatus).toBe('paid');
+    expect(casal.plan).toBe('pro');
+    expect(casal.pendingPlan).toBeNull();
+  });
+
+  it('cancelar pedido não altera o casal', () => {
+    const antes = WeddingStorageService.getCoupleById('couple-joana-miguel')!.paymentStatus;
+    const pedido = WeddingStorageService.createPaymentRequest({
+      coupleId: 'couple-joana-miguel',
+      plan: 'starter',
+      kind: 'initial',
+      amountKz: 45000
+    });
+
+    WeddingStorageService.setPaymentRequestStatus(pedido.id, 'cancelled');
+
+    const depois = WeddingStorageService.getPaymentRequests('couple-joana-miguel').find(
+      (r) => r.id === pedido.id
+    )!;
+    expect(depois.status).toBe('cancelled');
+    expect(WeddingStorageService.getCoupleById('couple-joana-miguel')!.paymentStatus).toBe(
+      antes
+    );
+  });
+
+  it('confirmar pedido inexistente não faz nada', () => {
+    expect(() =>
+      WeddingStorageService.setPaymentRequestStatus('nao-existe', 'paid')
+    ).not.toThrow();
+  });
+
+  it('resetToSeed limpa os pedidos de pagamento', () => {
+    WeddingStorageService.createPaymentRequest({
+      coupleId: 'couple-sofia-andre',
+      plan: 'starter',
+      kind: 'initial',
+      amountKz: 45000
+    });
+    expect(WeddingStorageService.getPaymentRequests().length).toBeGreaterThan(0);
+
+    WeddingStorageService.resetToSeed();
+
+    expect(WeddingStorageService.getPaymentRequests()).toHaveLength(0);
+  });
+});
+
 describe('prazo de resposta (rsvpDeadline)', () => {
   it('updateRsvp depois do prazo é recusado e não altera o convidado', () => {
     const eventos = WeddingStorageService.getEvents().map((e) =>

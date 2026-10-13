@@ -1,10 +1,11 @@
 import React from 'react';
-import { Save, Settings2 } from 'lucide-react';
+import { Save, Settings2, CreditCard } from 'lucide-react';
 import { getRepo, PlatformSettings } from '../../services/repo';
 import { useAuth } from '../../app/AuthContext';
 
 /**
- * CONFIGURAÇÕES (admin) — identidade da plataforma e contactos.
+ * CONFIGURAÇÕES (admin) — identidade da plataforma, contactos e dados de
+ * pagamento mostrados aos clientes (IBAN + Multicaixa Express).
  */
 export const AdminConfiguracoesPage: React.FC = () => {
   const { session } = useAuth();
@@ -98,6 +99,50 @@ export const AdminConfiguracoesPage: React.FC = () => {
               <input
                 value={settings.supportPhone}
                 onChange={(e) => setSettings({ ...settings, supportPhone: e.target.value })}
+                className="w-full py-2 px-3 text-sm bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-slate-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
+            <CreditCard className="w-4 h-4 text-slate-400" />
+            <h2 className="text-sm font-semibold text-slate-800">Dados de pagamento</h2>
+          </div>
+          <p className="text-xs text-slate-500 -mt-2">
+            Mostrados ao cliente no painel de pagamento (pedidos com referência). Preencha depois
+            de configurar a conta bancária ou o número Multicaixa Express.
+          </p>
+          <div>
+            <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-1">
+              IBAN
+            </label>
+            <input
+              value={settings.paymentIban || ''}
+              placeholder="AO06.0040.0000.8123.4567.1010.2"
+              onChange={(e) => setSettings({ ...settings, paymentIban: e.target.value })}
+              className="w-full py-2 px-3 text-sm bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-slate-500 font-mono"
+            />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-1">
+                Multicaixa Express
+              </label>
+              <input
+                value={settings.paymentMcxPhone || ''}
+                placeholder="+244 9XX XXX XXX"
+                onChange={(e) => setSettings({ ...settings, paymentMcxPhone: e.target.value })}
+                className="w-full py-2 px-3 text-sm bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-slate-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] uppercase tracking-wider text-slate-500 mb-1">
+                Titular
+              </label>
+              <input
+                value={settings.paymentHolderName || ''}
+                placeholder="Nome do titular da conta"
+                onChange={(e) => setSettings({ ...settings, paymentHolderName: e.target.value })}
                 className="w-full py-2 px-3 text-sm bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-slate-500"
               />
             </div>
