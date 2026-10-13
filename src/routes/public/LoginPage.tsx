@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '../../app/AuthContext';
 import { isSupabaseBackend } from '../../services/supabase/client';
@@ -12,7 +12,7 @@ import { isSupabaseBackend } from '../../services/supabase/client';
  * convite (/convite/:eventSlug/:guestToken).
  */
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, session, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,6 +29,12 @@ export const LoginPage: React.FC = () => {
   const redirectAfter = () => {
     navigate(from.startsWith('/cliente') ? from : '/cliente', { replace: true });
   };
+
+  // Já tem sessão (ex.: chegou aqui por um redirect antigo ou guardou o /login
+  // nos favoritos) → não mostra o formulário, leva-o de volta à sua área.
+  if (session && !loading) {
+    return <Navigate to={session.role === 'admin' ? '/admin' : from.startsWith('/cliente') ? from : '/cliente'} replace />;
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
