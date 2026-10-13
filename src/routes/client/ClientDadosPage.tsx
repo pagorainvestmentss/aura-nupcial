@@ -150,7 +150,14 @@ const [isProcessing, setIsProcessing] = React.useState(false);
     e.preventDefault();
     setBusy(true);
     try {
-      const guardado = await getRepo().saveEvent(form);
+      // Eventos antigos podem ter monograma vazio: ao gravar, preenche com as
+      // iniciais dos nomes para o selo do convite nunca ficar em branco.
+      const paraGuardar: WeddingEvent =
+        !form.monogram.trim() && !monoTouched.current
+          ? { ...form, monogram: suggestMonogram(form.brideName, form.groomName) }
+          : form;
+      if (paraGuardar !== form) setForm(paraGuardar);
+      const guardado = await getRepo().saveEvent(paraGuardar);
       if (!guardado) {
         setSaved(false);
         setSaveError(

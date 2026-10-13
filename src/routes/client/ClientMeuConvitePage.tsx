@@ -4,7 +4,7 @@ import QRCode from 'qrcode';
 import { Link, useNavigate } from 'react-router-dom';
 import { COLOR_PALETTES } from '../../data/palettes';
 import { useClientEvent } from './useClientEvent';
-import { getOccasion, eventNames } from '../../data/occasions';
+import { getOccasion, eventNames, displayMonogram } from '../../data/occasions';
 import { SmartImage } from '../../components/motion/SmartImage';
 import { guestInviteMessage, whatsappShareLink } from '../../utils/whatsapp';
 
@@ -153,7 +153,7 @@ export const ClientMeuConvitePage: React.FC = () => {
           </div>
           <div className="p-3 bg-[#FAF7F2] border border-stone-200 rounded-xs">
             <span className="text-stone-400 block text-[10px] uppercase">Monograma</span>
-            <strong className="text-stone-900 font-medium">{event.monogram}</strong>
+            <strong className="text-stone-900 font-medium">{displayMonogram(event)}</strong>
           </div>
           <div className="p-3 bg-[#FAF7F2] border border-stone-200 rounded-xs">
             <span className="text-stone-400 block text-[10px] uppercase">Prazo RSVP</span>

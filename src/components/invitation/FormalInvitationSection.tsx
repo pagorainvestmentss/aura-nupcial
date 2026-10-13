@@ -1,7 +1,7 @@
 import React from 'react';
 import { WeddingEvent, Guest, ColorPalette } from '../../types/wedding';
 import { BotanicalCorner, BotanicalDivider } from '../common/BotanicalFlourish';
-import { eventNames, formalPhrase, fallbackNames } from '../../data/occasions';
+import { eventNames, formalPhrase, fallbackNames, displayMonogram } from '../../data/occasions';
 
 interface FormalInvitationSectionProps {
   event: WeddingEvent;
@@ -105,7 +105,7 @@ export const FormalInvitationSection: React.FC<FormalInvitationSectionProps> = (
           style={{ borderColor: palette.goldAccent, color: palette.accent }}
         >
           <span className="font-serif text-xs font-semibold tracking-widest">
-            {event.monogram.replace('&', '+')}
+            {displayMonogram(event)}
           </span>
         </div>
 

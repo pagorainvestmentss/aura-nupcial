@@ -329,6 +329,19 @@ export function eventNames(event: Pick<WeddingEvent, 'brideName' | 'conjunction'
 }
 
 /**
+ * Monograma pronto a mostrar no convite (selos, coroas, cartão).
+ * Usa o valor guardado; quando vazio, deriva as iniciais dos nomes
+ * (ex.: Maria & Gabriel → 'M + G') para o selo nunca ficar em branco.
+ */
+export function displayMonogram(event: Pick<WeddingEvent, 'monogram' | 'brideName' | 'groomName'>): string {
+  const saved = event.monogram.trim();
+  if (saved) return saved.replace('&', '+');
+  const i1 = event.brideName.trim().charAt(0).toUpperCase();
+  const i2 = event.groomName.trim().charAt(0).toUpperCase();
+  return [i1, i2].filter(Boolean).join(' + ');
+}
+
+/**
  * Nome de reserva quando o evento ainda não tem nomes (pré-visualização).
  * Escolhido para concordar com os verbos das frases da ocasião.
  */
