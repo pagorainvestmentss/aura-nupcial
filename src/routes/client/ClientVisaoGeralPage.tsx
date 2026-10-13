@@ -59,7 +59,7 @@ export const ClientVisaoGeralPage: React.FC = () => {
   const switchPlan = async (plan: PlanId) => {
     if (!couple) return;
     const upgrade = isUpgrade(couple.plan, plan) && couple.pendingPlan !== plan;
-    const sameRankOrHigher = plan === couple.plan || isUpgrade(plan, couple.plan);
+    const sameRankOrHigher = plan === couple.plan || isUpgrade(couple.plan, plan);
     if (!upgrade && sameRankOrHigher) return;
     const msg = upgrade
       ? `Pedir o upgrade para o plano ${PLAN_LABEL[plan]} (${planGuestLimitLabel(plan)})? Vamos gerar um pedido de pagamento pela diferença — assim que a equipa confirmar, o plano é actualizado.`
