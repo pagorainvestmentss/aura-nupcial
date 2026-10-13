@@ -1,5 +1,6 @@
-import { WeddingEvent, Guest, Couple, RsvpStatus, QrStatus, PaymentStatus, ClientStatus, PlanId } from '../types/wedding';
+import { WeddingEvent, Guest, Couple, RsvpStatus, QrStatus, PaymentStatus, PaymentRequest, PaymentRequestKind, PaymentRequestStatus, ClientStatus, PlanId } from '../types/wedding';
 import { isUpgrade } from '../data/site';
+import { generatePaymentReference } from '../utils/reference';
 import { SEED_COUPLES, SEED_EVENTS, SEED_GUESTS, heroPhotoUrl, intimatePhotoUrl, ringsPhotoUrl } from '../data/defaultWeddingData';
 import { paletteForTemplate } from '../data/templates';
 
@@ -7,7 +8,8 @@ const STORAGE_KEYS = {
   COUPLES: 'aura_couples_v2',
   EVENTS: 'aura_events_v2',
   GUESTS: 'aura_guests_v2',
-  SETTINGS: 'aura_settings_v1'
+  SETTINGS: 'aura_settings_v1',
+  PAYMENT_REQUESTS: 'aura_payment_requests_v1'
 };
 
 // Cryptographically safe random token generator for unique guest links
@@ -512,8 +514,72 @@ export class WeddingStorageService {
     }
   }
 
+  // --- Payment requests (Fase 0) ---
+  public static getPaymentRequests(coupleId?: string): PaymentRequest[] {
+    this.init();
+    let list: PaymentRequest[] = [];
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.PAYMENT_REQUESTS);
+      list = data ? JSON.parse(data) : [];
+    } catch {
+      list = [];
+    }
+    return coupleId ? list.filter((r) => r.coupleId === coupleId) : list;
+  }
+
+  public static createPaymentRequest(params: {
+    coupleId: string;
+    plan: PlanId;
+    kind: PaymentRequestKind;
+    amountKz: number;
+  }): PaymentRequest {
+    const request: PaymentRequest = {
+      id: crypto.randomUUID(),
+      coupleId: params.coupleId,
+      plan: params.plan,
+      kind: params.kind,
+      amountKz: params.amountKz,
+      reference: generatePaymentReference(),
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+    const list = this.getPaymentRequests();
+    list.push(request);
+    this.persist(STORAGE_KEYS.PAYMENT_REQUESTS, list);
+    return request;
+  }
+
+  /**
+   * Confirma (`paid`) ou cancela um pedido. A confirmação aproveita
+   * `setPaymentStatus` para marcar o casal como pago e activar upgrades.
+   */
+  public static setPaymentRequestStatus(
+    requestId: string,
+    status: Exclude<PaymentRequestStatus, 'pending'>,
+    confirmedBy?: string
+  ): void {
+    const list = this.getPaymentRequests();
+    const index = list.findIndex((r) => r.id === requestId);
+    if (index === -1) return;
+
+    list[index].status = status;
+    if (status === 'paid') {
+      list[index].paidAt = new Date().toISOString();
+      if (confirmedBy) list[index].confirmedBy = confirmedBy;
+      this.setPaymentStatus(list[index].coupleId, 'paid');
+    }
+    this.persist(STORAGE_KEYS.PAYMENT_REQUESTS, list);
+  }
+
   // --- Platform settings (demo) ---
-  public static getSettings(): { brandName: string; supportEmail: string; supportPhone: string } {
+  public static getSettings(): {
+    brandName: string;
+    supportEmail: string;
+    supportPhone: string;
+    paymentIban?: string;
+    paymentMcxPhone?: string;
+    paymentHolderName?: string;
+  } {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
       if (data) return JSON.parse(data);
@@ -527,7 +593,14 @@ export class WeddingStorageService {
     };
   }
 
-  public static saveSettings(settings: { brandName: string; supportEmail: string; supportPhone: string }): void {
+  public static saveSettings(settings: {
+    brandName: string;
+    supportEmail: string;
+    supportPhone: string;
+    paymentIban?: string;
+    paymentMcxPhone?: string;
+    paymentHolderName?: string;
+  }): void {
     this.persist(STORAGE_KEYS.SETTINGS, settings);
   }
 
@@ -537,5 +610,6 @@ export class WeddingStorageService {
     this.persist(STORAGE_KEYS.EVENTS, SEED_EVENTS);
     this.persist(STORAGE_KEYS.GUESTS, SEED_GUESTS);
     localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+    localStorage.removeItem(STORAGE_KEYS.PAYMENT_REQUESTS);
   }
 }

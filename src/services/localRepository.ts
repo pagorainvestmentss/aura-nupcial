@@ -1,6 +1,6 @@
-import type { ClientStatus, Couple, EventStatus, Guest, PaymentStatus, PlanId, WeddingEvent } from '../types/wedding';
+import type { ClientStatus, Couple, EventStatus, Guest, PaymentRequest, PaymentRequestKind, PaymentRequestStatus, PaymentStatus, PlanId, WeddingEvent } from '../types/wedding';
 import { WeddingStorageService } from './weddingStorage';
-import type { PlatformSettings, QrValidationResult, UpdateRsvpParams, UpdateRsvpResult, WeddingRepository } from './repository';
+import type { CreatePaymentRequestParams, PlatformSettings, QrValidationResult, UpdateRsvpParams, UpdateRsvpResult, WeddingRepository } from './repository';
 
 /** Micro-deferência para que o estado React assente entre renders (como uma rede). */
 const tick = <T>(value: T): Promise<T> => Promise.resolve(value);
@@ -21,6 +21,16 @@ export const localRepository: WeddingRepository = {
   setClientStatus: (coupleId: string, status: ClientStatus) => tick(WeddingStorageService.setClientStatus(coupleId, status)),
   setPaymentStatus: (coupleId: string, paymentStatus: PaymentStatus) => tick(WeddingStorageService.setPaymentStatus(coupleId, paymentStatus)),
   requestPlanChange: (coupleId: string, plan: PlanId) => tick(WeddingStorageService.requestPlanChange(coupleId, plan)),
+
+  createPaymentRequest: (params: CreatePaymentRequestParams): Promise<PaymentRequest> =>
+    tick(WeddingStorageService.createPaymentRequest(params)),
+  getPaymentRequests: (coupleId?: string): Promise<PaymentRequest[]> =>
+    tick(WeddingStorageService.getPaymentRequests(coupleId)),
+  setPaymentRequestStatus: (
+    requestId: string,
+    status: Exclude<PaymentRequestStatus, 'pending'>,
+    confirmedBy?: string
+  ): Promise<void> => tick(WeddingStorageService.setPaymentRequestStatus(requestId, status, confirmedBy)),
 
   getEvents: () => tick(WeddingStorageService.getEvents()),
   getEventById: (eventId: string) => tick(WeddingStorageService.getEventById(eventId)),

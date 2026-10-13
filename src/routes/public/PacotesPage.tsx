@@ -4,11 +4,12 @@ import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
 import { Reveal } from '../../components/motion/Reveal';
 import { EASE_OUT, staggerChild } from '../../components/motion/variants';
+import { PLAN_PRICE_KZ, formatKz } from '../../data/site';
 
 const PLANS = [
   {
     name: 'Starter',
-    price: '45.000',
+    price: formatKz(PLAN_PRICE_KZ.starter),
     currency: 'Kz',
     period: 'pagamento único',
     highlight: false,
@@ -24,7 +25,7 @@ const PLANS = [
   },
   {
     name: 'Pro',
-    price: '120.000',
+    price: formatKz(PLAN_PRICE_KZ.pro),
     currency: 'Kz',
     period: 'pagamento único',
     highlight: true,
@@ -41,7 +42,7 @@ const PLANS = [
   },
   {
     name: 'Premium',
-    price: '200.000',
+    price: formatKz(PLAN_PRICE_KZ.premium),
     currency: 'Kz',
     period: 'pagamento único',
     highlight: false,

@@ -183,6 +183,35 @@ export interface PlatformSettings {
   brandName: string;
   supportEmail: string;
   supportPhone: string;
+  /** Dados de pagamento mostrados ao cliente — vazios até o admin configurar. */
+  paymentIban?: string;
+  paymentMcxPhone?: string;
+  paymentHolderName?: string;
+}
+
+export type PaymentRequestKind = 'initial' | 'upgrade';
+
+export type PaymentRequestStatus = 'pending' | 'paid' | 'cancelled';
+
+/**
+ * Pedido de pagamento gerado pelo cliente (Fase 0): tem referência única
+ * (ex. AURA-8F4K), valor e plano. O admin confirma em /admin/pagamentos —
+ * a confirmação marca o pedido como pago E desbloqueia o casal
+ * (`paymentStatus = 'paid'`, activando `pendingPlan` quando exista).
+ */
+export interface PaymentRequest {
+  id: string;
+  coupleId: string;
+  plan: PlanId;
+  kind: PaymentRequestKind;
+  amountKz: number;
+  reference: string;
+  status: PaymentRequestStatus;
+  createdAt: string;
+  paidAt?: string;
+  /** Email ou nome de quem confirmou (admin). */
+  confirmedBy?: string;
+  notes?: string;
 }
 
 export interface AuthSession {

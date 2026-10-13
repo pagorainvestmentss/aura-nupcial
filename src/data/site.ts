@@ -32,6 +32,18 @@ export const PLAN_LABEL: Record<PlanId, string> = {
   premium: 'Premium'
 }
 
+/** Preço de cada plano em Kwanzas — fonte única (usado em pedidos de pagamento). */
+export const PLAN_PRICE_KZ: Record<PlanId, number> = {
+  starter: 45_000,
+  pro: 120_000,
+  premium: 200_000
+};
+
+/** 45000 → "45.000" (formato usado em toda a interface). */
+export function formatKz(amount: number): string {
+  return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
 /** Limite de convidados por pacote — null = ilimitado. */
 export const PLAN_GUEST_LIMIT: Record<PlanId, number | null> = {
   starter: 30,
