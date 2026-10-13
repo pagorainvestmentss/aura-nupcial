@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Aura Nupcial</title>
+    <script type="text/javascript">
+      // Fallback SPA do GitHub Pages (técnica spa-github-pages).
+      // Caminhos inexistentes (ex.: /aura-nupcial/redefinir) são reescritos
+      // para "/aura-nupcial/?/redefinir" e o index.html repõe o caminho real
+      // antes de o React Router arrancar. Sem isto, todos os deep links
+      // (links de convite e links de recuperação) devolvem 404 em produção.
+      var pathSegmentsToKeep = 1;
+      var l = window.location;
+      l.replace(
+        l.protocol +
+          '//' +
+          l.hostname +
+          (l.port ? ':' + l.port : '') +
+          l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') +
+          '/?/' +
+          l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash
+      );
+    </script>
+  </head>
+  <body></body>
+</html>

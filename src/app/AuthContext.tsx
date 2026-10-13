@@ -57,6 +57,10 @@ interface AuthContextValue {
     plan?: PlanId;
   }) => Promise<RegisterResult>;
   logout: () => void;
+  /** Envia o link de redefinição por email (só no modo Supabase). */
+  requestPasswordReset: (email: string) => Promise<{ ok: boolean; error?: string }>;
+  /** Define a nova palavra-passe após o link de redefinição (só no modo Supabase). */
+  setNewPassword: (password: string) => Promise<{ ok: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -73,12 +77,31 @@ export function phoneAsPassword(raw: string): string {
 
 function friendlyAuthError(message: string): string {
   const m = message.toLowerCase();
+  if (
+    m.includes('rate limit') ||
+    m.includes('over_email_send_rate_limit') ||
+    m.includes('too many')
+  ) {
+    return 'Já pediu muitos emails recentemente. Aguarde alguns minutos e tente novamente.';
+  }
   if (m.includes('invalid login') || m.includes('invalid_credentials')) {
     return 'Credenciais incorretas. Verifique o email e a palavra-passe (o seu número de WhatsApp).';
   }
   if (m.includes('email not confirmed')) return 'Confirme o email antes de entrar.';
   if (m.includes('already registered') || m.includes('already been registered')) {
     return 'Já existe uma conta com este email. Faça login.';
+  }
+  if (m.includes('user not found') || m.includes('user does not exist')) {
+    return 'Não encontrámos nenhuma conta com este email. Contacte a plataforma.';
+  }
+  if (m.includes('email_address_invalid') || m.includes('not authorized')) {
+    return 'Não foi possível enviar o email. Verifique o endereço ou tente mais tarde.';
+  }
+  if (m.includes('token has expired') || m.includes('invalid token') || m.includes('otp')) {
+    return 'Este link expirou ou já foi usado. Peça um novo.';
+  }
+  if (m.includes('password')) {
+    return 'A palavra-passe deve ter pelo menos 8 caracteres.';
   }
   return 'Não foi possível entrar. Tente novamente.';
 }
@@ -276,7 +299,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(null);
   }, [supabaseMode]);
 
-  const value = useMemo(() => ({ session, login, register, logout }), [session, login, register, logout]);
+  const requestPasswordReset = useCallback(
+    async (email: string): Promise<{ ok: boolean; error?: string }> => {
+      const normalized = email.trim().toLowerCase();
+      if (!normalized || !normalized.includes('@')) {
+        return { ok: false, error: 'Indique um email válido.' };
+      }
+      if (!supabaseMode) {
+        return { ok: false, error: 'A recuperação de palavra-passe está disponível apenas para as contas activas.' };
+      }
+      // Respeita o subcaminho do host (ex.: GitHub Pages /aura-nupcial/).
+      const base = import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/+$/, '');
+      const redirectTo = `${window.location.origin}${base}/redefinir`;
+      const { error } = await getSupabase().auth.resetPasswordForEmail(normalized, { redirectTo });
+      if (error) return { ok: false, error: friendlyAuthError(error.message) };
+      return { ok: true };
+    },
+    [supabaseMode]
+  );
+
+  const setNewPassword = useCallback(
+    async (password: string): Promise<{ ok: boolean; error?: string }> => {
+      if (!supabaseMode) {
+        return { ok: false, error: 'A alteração de palavra-passe está disponível apenas para as contas activas.' };
+      }
+      if (!password || password.length < 8) {
+        return { ok: false, error: 'A palavra-passe deve ter pelo menos 8 caracteres.' };
+      }
+      const { error } = await getSupabase().auth.updateUser({ password });
+      if (error) return { ok: false, error: friendlyAuthError(error.message) };
+      return { ok: true };
+    },
+    [supabaseMode]
+  );
+
+  const value = useMemo(
+    () => ({ session, login, register, logout, requestPasswordReset, setNewPassword }),
+    [session, login, register, logout, requestPasswordReset, setNewPassword]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
