@@ -163,9 +163,16 @@ const [isProcessing, setIsProcessing] = React.useState(false);
       setSaved(true);
       setVersion((v) => v + 1);
       setTimeout(() => setSaved(false), 3000);
-    } catch {
+    } catch (err) {
       setSaved(false);
-      setSaveError('Não foi possível guardar as alterações. Verifique a sua ligação e tente de novo.');
+      // Erros de envio de foto já chegam em português da camada de dados;
+      // o resto mostra a mensagem genérica de guardado.
+      const msg = err instanceof Error ? err.message : '';
+      setSaveError(
+        msg.includes('foto')
+          ? msg
+          : 'Não foi possível guardar as alterações. Verifique a sua ligação e tente de novo.'
+      );
     } finally {
       setBusy(false);
     }

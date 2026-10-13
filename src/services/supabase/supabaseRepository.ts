@@ -4,6 +4,12 @@ import { isUpgrade } from '../../data/site';
 import type { PlatformSettings, QrValidationResult, UpdateRsvpParams, UpdateRsvpResult, WeddingRepository } from '../repository';
 import { getSupabase } from './client';
 import { coupleToRow, eventToRow, guestToRow, rowToCouple, rowToEvent, rowToGuest, type CoupleRow, type EventRow, type GuestRow } from './mappers';
+import {
+  cleanupRemovedPhotos,
+  removeEventFolder,
+  resolveEventPhotos,
+  storeEventPhotos
+} from './storage';
 
 type AnyJson = Record<string, unknown>;
 
@@ -13,13 +19,22 @@ function errMsg(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
+/**
+ * Linha → evento pronto a usar: além do mapeamento, os caminhos do bucket
+ * `event-photos` são resolvidos para URLs públicas de leitura.
+ * `dataURL` e URLs antigas passam intactas (convites já publicados).
+ */
+function toEvent(row: EventRow): WeddingEvent {
+  return resolveEventPhotos(rowToEvent(row));
+}
+
 /** Carrega convidado (por token) e o seu evento — usado na validação de QR. */
 async function loadGuestAndEvent(token: string): Promise<{ guest?: Guest; event?: WeddingEvent }> {
   const { data: g } = await db().from('guests').select('*').ilike('token', token).maybeSingle();
   const guest = g ? rowToGuest(g as GuestRow) : undefined;
   if (!guest) return {};
   const { data: e } = await db().from('events').select('*').eq('id', guest.eventId).maybeSingle();
-  return { guest, event: e ? rowToEvent(e as EventRow) : undefined };
+  return { guest, event: e ? toEvent(e as EventRow) : undefined };
 }
 
 /**
@@ -70,6 +85,9 @@ export const supabaseRepository: WeddingRepository = {
     }
     const { error } = await db().from('couples').delete().eq('id', coupleId);
     if (error) throw new Error(`Não foi possível remover o cliente: ${errMsg(error)}`);
+    for (const eventId of eventIds) {
+      await removeEventFolder(coupleId, eventId);
+    }
   },
 
   async setClientStatus(coupleId: string, status: ClientStatus): Promise<void> {
@@ -106,32 +124,43 @@ export const supabaseRepository: WeddingRepository = {
   async getEvents(): Promise<WeddingEvent[]> {
     const { data, error } = await db().from('events').select('*');
     if (error) throw new Error(`Não foi possível carregar os convites: ${errMsg(error)}`);
-    return ((data ?? []) as EventRow[]).map(rowToEvent);
+    return ((data ?? []) as EventRow[]).map(toEvent);
   },
 
   async getEventById(eventId: string): Promise<WeddingEvent | undefined> {
     const { data, error } = await db().from('events').select('*').eq('id', eventId).maybeSingle();
     if (error) throw new Error(`Não foi possível carregar o convite: ${errMsg(error)}`);
-    return data ? rowToEvent(data as EventRow) : undefined;
+    return data ? toEvent(data as EventRow) : undefined;
   },
 
   async getEventBySlug(slug: string): Promise<WeddingEvent | undefined> {
     const { data, error } = await db().from('events').select('*').ilike('slug', slug).maybeSingle();
     if (error) throw new Error(`Não foi possível carregar o convite: ${errMsg(error)}`);
-    return data ? rowToEvent(data as EventRow) : undefined;
+    return data ? toEvent(data as EventRow) : undefined;
   },
 
   async saveEvent(event: WeddingEvent): Promise<boolean> {
-    const { error } = await db().from('events').upsert(eventToRow(event), { onConflict: 'id' });
+    // Fotos pendentes (dataURL) vão para o bucket event-photos: a linha guarda
+    // só o caminho. Compara-se com a versão anterior (cru, com caminhos) para
+    // limpar do bucket as fotos substituídas ou removidas.
+    const { data: prevRow } = await db().from('events').select('*').eq('id', event.id).maybeSingle();
+    const previous = prevRow ? rowToEvent(prevRow as EventRow) : undefined;
+    const stored = await storeEventPhotos(event);
+
+    const { error } = await db().from('events').upsert(eventToRow(stored), { onConflict: 'id' });
     if (error) throw new Error(`Não foi possível guardar o convite: ${errMsg(error)}`);
+
+    await cleanupRemovedPhotos(previous, stored);
     return true;
   },
 
   async deleteEvent(eventId: string): Promise<void> {
+    const { data: row } = await db().from('events').select('couple_id').eq('id', eventId).maybeSingle();
     await db().from('guests').delete().eq('event_id', eventId);
     await db().from('couples').update({ active_event_id: null }).eq('active_event_id', eventId);
     const { error } = await db().from('events').delete().eq('id', eventId);
     if (error) throw new Error(`Não foi possível remover o convite: ${errMsg(error)}`);
+    if (row) await removeEventFolder((row as { couple_id: string }).couple_id, eventId);
   },
 
   async setEventStatus(eventId: string, status: EventStatus): Promise<void> {
@@ -168,7 +197,7 @@ export const supabaseRepository: WeddingRepository = {
     const json = data as AnyJson | null;
     if (!json || json.ok !== true) return {};
 
-    const event = json.event ? rowToEvent(json.event as EventRow) : undefined;
+    const event = json.event ? toEvent(json.event as EventRow) : undefined;
     const guest = json.guest ? rowToGuest(json.guest as GuestRow) : undefined;
     const coupleStatus = (json.couple_status as ClientStatus | null) ?? undefined;
     return { event, guest, coupleStatus };
