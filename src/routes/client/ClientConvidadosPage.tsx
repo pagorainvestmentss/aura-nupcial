@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Pencil, Trash2, Copy, Check, Search, Users, MessageCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Copy, Check, Search, Users, MessageCircle, Printer } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { generateRandomToken } from '../../services/weddingStorage';
 import { getRepo } from '../../services/repo';
@@ -252,6 +252,16 @@ export const ClientConvidadosPage: React.FC = () => {
                 <MessageCircle className="w-3 h-3" />
                 WhatsApp
               </button>
+              <a
+                href={`${window.location.origin}${import.meta.env.BASE_URL}convite/${event?.slug || ''}/${g.token}/imprimir`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-stone-600 border border-stone-300 rounded-xs hover:bg-stone-50 cursor-pointer"
+                title="Imprimir cartão A5 deste convidado"
+              >
+                <Printer className="w-3 h-3" />
+                Imprimir
+              </a>
               <button
                 onClick={() => openEdit(g)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-stone-600 border border-stone-300 rounded-xs hover:bg-stone-50 cursor-pointer"

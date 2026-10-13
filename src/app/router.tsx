@@ -120,6 +120,9 @@ const ClientDadosPage = React.lazy(() =>
 const InvitationPage = React.lazy(() =>
   import('../routes/invitation/InvitationPage').then((m) => ({ default: m.InvitationPage }))
 );
+const PrintInvitationPage = React.lazy(() =>
+  import('../routes/invitation/PrintInvitationPage').then((m) => ({ default: m.PrintInvitationPage }))
+);
 
 /**
  * Mapa de rotas — 4 ambientes estritamente separados:
@@ -198,6 +201,9 @@ export const router = createBrowserRouter(
   {
     path: '/convite/:eventSlug/:guestToken',
     element: <InvitationLayout />,
-    children: [{ index: true, element: invitationPage(<InvitationPage />) }]
+    children: [
+      { index: true, element: invitationPage(<InvitationPage />) },
+      { path: 'imprimir', element: invitationPage(<PrintInvitationPage />) }
+    ]
   }
 ], { basename });
