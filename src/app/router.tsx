@@ -55,6 +55,12 @@ const CriarContaPage = React.lazy(() =>
 const LoginPage = React.lazy(() =>
   import('../routes/public/LoginPage').then((m) => ({ default: m.LoginPage }))
 );
+const EsqueciSenhaPage = React.lazy(() =>
+  import('../routes/public/EsqueciSenhaPage').then((m) => ({ default: m.EsqueciSenhaPage }))
+);
+const RedefinirSenhaPage = React.lazy(() =>
+  import('../routes/public/RedefinirSenhaPage').then((m) => ({ default: m.RedefinirSenhaPage }))
+);
 const NotFoundPage = React.lazy(() =>
   import('../routes/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
 );
@@ -147,6 +153,8 @@ export const router = createBrowserRouter(
       { path: 'adquirir', element: publicPage(<AdquirirPage />) },
       { path: 'criar', element: publicPage(<CriarContaPage />) },
       { path: 'login', element: publicPage(<LoginPage />) },
+      { path: 'esqueci-a-palavra-passe', element: publicPage(<EsqueciSenhaPage />) },
+      { path: 'redefinir', element: publicPage(<RedefinirSenhaPage />) },
       { path: '*', element: publicPage(<NotFoundPage />) }
     ]
   },

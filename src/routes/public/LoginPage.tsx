@@ -83,6 +83,14 @@ export const LoginPage: React.FC = () => {
                 placeholder="O seu número de WhatsApp"
                 className="w-full py-2.5 px-3 text-sm font-sans bg-[#FAF7F2] border border-stone-300 rounded-xs focus:outline-none focus:border-[#5E6B56]"
               />
+              <div className="text-right mt-1.5">
+                <Link
+                  to="/esqueci-a-palavra-passe"
+                  className="text-[11px] text-[#5E6B56] hover:underline font-sans"
+                >
+                  Esqueci a palavra-passe
+                </Link>
+              </div>
             </div>
           )}
 
