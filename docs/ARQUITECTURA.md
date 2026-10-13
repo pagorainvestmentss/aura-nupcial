@@ -413,19 +413,23 @@ validate_qr(token)                   → estado do passe + marca 'used'
 
 ### 9.5 Storage (fotos)
 
-**Fase 1 (actual):** o cliente envia as próprias fotos em `ClientDadosPage` ("As nossas fotos").
+**Cliente (sempre):** o cliente envia as próprias fotos em `ClientDadosPage` ("As nossas fotos").
 `src/utils/imageUpload.ts` valida (JPG/PNG/WEBP, máx. 10 MB), redimensiona (maior lado 1600 px) e
-comprime em JPEG ~0.82 no próprio navegador → `dataURL` gravado em `heroPhoto` e `gallery[]` do evento,
-dentro do `localStorage` (cota ~5 MB; estouro tratado com mensagem amigável em `saveEvent`).
+comprime em JPEG ~0.82 no próprio navegador (chega ao formulário como `dataURL` intermédio).
 Limite de galeria por plano em `PLAN_GALLERY_LIMIT` (Essencial 6 / Pro 20) — o botão "Adicionar" some
 ao atingir o limite. Sem `heroPhoto`, o arco do convite cai para um bloco tipográfico (`CoupleHeroSection`).
 Migração `migrateLegacyPhotos()` em `weddingStorage.init()` corrige URLs de assets renomeados.
 
-**Fase 2 (Supabase) — ADIADO (Issue de seguimento):**
-A Fase 2 arranca **sem** bucket de Storage: as fotos continuam a ser `dataURL` (JPEG comprimido)
-gravadas nos campos `heroPhoto`/`gallery` da linha do evento (jsonb). Funciona em produção e não
-bloqueia o corte. Optimização futura: mover para bucket privado `event-photos` (leitura por URL
-assinada, upload por RLS ao casal dono) para não inflar as linhas com base64.
+**Fase 2 (Supabase) — activo (Issue #32):** as fotos vivem no bucket `event-photos`, pasta
+`couples/<casal>/<evento>/` (`hero.jpg`, `intimate.jpg`, `rings.jpg`, `gallery-<id>.jpg`).
+`supabaseRepository.saveEvent` envia os `dataURL` pendentes ao bucket (funções de `storage.ts`) e a
+linha do evento guarda **só o caminho**; na leitura `resolveEventPhotos()` converte caminho → URL
+pública (`getPublicUrl`, síncrona, sem rede) — `dataURL`/URLs antigas passam intactas, pelo que
+convites já publicados continuam a abrir sem migração. Escrita protegida por RLS
+(`event_photos_owner_*`: casal dono ou admin), leitura pública (bucket `public=true`; caminhos com
+UUIDs de casal+evento não são enumeráveis — ver migração
+`20261013090000_event_photos_public_bucket.sql`). Fotos substituídas/removidas e pastas de eventos
+apagados são limpos do bucket (best-effort, nunca bloqueiam o guardado).
 
 ### 9.6 Migração — plano executado (Issue A #28 · Issue B #29)
 
@@ -440,7 +444,7 @@ assinada, upload por RLS ao casal dono) para não inflar as linhas com base64.
   registo → email de confirmação → login (ecrã "Quase lá!").
 - **Convidado continua sem conta**; RSVP e QR validados por token via RPCs `submit_rsvp`/`validate_qr`.
 - **Base limpa** — dados demo removidos; Gabriel recriado manualmente; links de demonstração retirados.
-- **Fotos** ficam em `dataURL` na linha do evento (bucket `event-photos` adiado — ver §9.5).
+- **Fotos** vão para o bucket `event-photos` e a linha guarda só o caminho (Issue #32 — ver §9.5).
 
 **RPCs (migrations `…_align_app_types.sql` e `…_invitation_public_access.sql`):**
 `register_client` (authenticated), `submit_rsvp`, `validate_qr`, `resolve_invitation` (anon, devolve
@@ -483,6 +487,6 @@ assinada, upload por RLS ao casal dono) para não inflar as linhas com base64.
 | 9 | Code-splitting (bundle actual ~592 kB) | ✅ rotas em `React.lazy` + chunk por página (~345 kB) |
 | 10 | Nota menor: dashboard admin duplica nome do evento/cliente na tabela de eventos | ⏳ cosmético |
 | 11 | Limpeza de deps sem uso + lock file único + docs actualizadas | ✅ Issue #16 |
-| 12 | Fotos via Storage `event-photos` (§9.5) — evitar base64 nas linhas do evento | ⏳ Issue de seguimento |
-| 13 | Recuperação de palavra-passe (o cliente só tem a palavra-passe=telefone) | ⏳ Issue de seguimento |
+| 12 | Fotos via Storage `event-photos` (§9.5) — evitar base64 nas linhas do evento | ✅ Issue #32 |
+| 13 | Recuperação de palavra-passe (o cliente só tem a palavra-passe=telefone) | ✅ Issue #31 · PR #38 |
 | 14 | Activar *leaked password protection* + rotação das chaves expostas durante a migração | ⏳ operação Supabase/GitHub/Vercel |
