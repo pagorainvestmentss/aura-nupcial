@@ -392,14 +392,17 @@ export const ClientVisaoGeralPage: React.FC = () => {
           </p>
         )}
 
-        {/* Painel de pagamento */}
-        {!paid ? (
+        {/* Painel de pagamento — visível enquanto houver pedido pendente
+            (inclui upgrades de casais já pagos, que precisam da referência
+            da diferença) */}
+        {!paid || couple.pendingPlan ? (
           <div className="mt-4 border-t border-stone-200 pt-4">
             {(() => {
               const pendingRequest = requests.find(
                 (r) => r.status === 'pending' && r.plan === (couple.pendingPlan ?? couple.plan)
               );
               if (!pendingRequest) {
+                if (paid) return null;
                 return (
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="text-xs text-stone-500 font-sans">
