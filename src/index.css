@@ -170,8 +170,43 @@ button:not(:disabled):active {
 }
 
 /* Print styling for couples wanting physical keepsake export */
+
+/* Cartão A5 — tamanho fixo também no ecrã para o preview coincidir com o papel */
+.print-card {
+  width: 148mm;
+  height: 210mm;
+}
+
 @media print {
   .no-print {
     display: none !important;
+  }
+
+  /* Página de impressão sem margens extra (o cartão tem a sua própria moldura) */
+  .print-page {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* Fundo do browser branco no papel */
+  body {
+    background: #ffffff !important;
+  }
+
+  .print-card {
+    box-shadow: none !important;
+    margin: 0 !important;
+    border: none !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+/* Tamanho do papel para o cartão de impressão (só afecta a janela de impressão) */
+@media print {
+  @page {
+    size: A5 portrait;
+    margin: 0;
   }
 }

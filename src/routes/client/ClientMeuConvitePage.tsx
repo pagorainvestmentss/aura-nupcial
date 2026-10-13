@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Copy, Check, QrCode, Eye, UserPlus, AlertTriangle, MessageCircle } from 'lucide-react';
+import { ExternalLink, Copy, Check, QrCode, Eye, UserPlus, AlertTriangle, MessageCircle, Printer } from 'lucide-react';
 import QRCode from 'qrcode';
 import { Link, useNavigate } from 'react-router-dom';
 import { COLOR_PALETTES } from '../../data/palettes';
@@ -20,6 +20,11 @@ export const ClientMeuConvitePage: React.FC = () => {
   const inviteUrl =
     event && firstGuest
       ? `${window.location.origin}${import.meta.env.BASE_URL}convite/${event.slug}/${firstGuest.token}`
+      : '';
+
+  const printUrl =
+    event && firstGuest
+      ? `${window.location.origin}${import.meta.env.BASE_URL}convite/${event.slug}/${firstGuest.token}/imprimir`
       : '';
 
   const copyLink = () => {
@@ -123,6 +128,15 @@ export const ClientMeuConvitePage: React.FC = () => {
             >
               <ExternalLink className="w-4 h-4" />
               Nova janela
+            </a>
+            <a
+              href={printUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-stone-700 bg-white border border-stone-300 hover:bg-stone-50 rounded-xs transition-colors"
+            >
+              <Printer className="w-4 h-4" />
+              Imprimir cartão
             </a>
           </div>
         )}

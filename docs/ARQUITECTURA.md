@@ -96,10 +96,12 @@ npm run build    # produção
 | Rota | Página | Função |
 |------|--------|--------|
 | `/convite/:eventSlug/:guestToken` | `InvitationPage` | Envelope → convite completo → RSVP → QR |
+| `/convite/:eventSlug/:guestToken/imprimir` | `PrintInvitationPage` | Cartão A5 imprimível (RSVP + QR), sem envelope/música/botões |
 
 - **Token inválido** → `InvalidInvitation reason="not_found"`.
 - **Evento `draft`/`suspended`** → `InvalidInvitation reason="revoked"`.
 - Barra flutuante **"Demo:"** (classe `no-print`) alterna convidados para demonstração.
+- **Impressão**: o cliente abre o cartão a partir de `/cliente/convite` (botão "Imprimir cartão") ou das linhas de `/cliente/convidados` e `/cliente/rsvp` (ícone Printer). O carregamento do convite (anónimo via RPC ou cliente via leitura directa) vive em `useInviteByToken`, partilhado entre `InvitationPage` e `PrintInvitationPage`. O cartão usa `PrintCard` (paleta do evento, saudação personalizada, bloco RSVP por estado: confirmed/pending/declined) e o CSS `@media print` de `index.css` força `@page A5 portrait` + `print-color-adjust: exact`.
 
 ---
 

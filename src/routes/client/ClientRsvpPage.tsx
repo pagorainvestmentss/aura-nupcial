@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, XCircle, Clock, Download, Users } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Download, Users, Printer } from 'lucide-react';
 import { useClientEvent } from './useClientEvent';
 
 /**
@@ -170,6 +170,16 @@ export const ClientRsvpPage: React.FC = () => {
                 </p>
               )}
             </div>
+            <a
+              href={`${window.location.origin}${import.meta.env.BASE_URL}convite/${event?.slug || ''}/${g.token}/imprimir`}
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-stone-600 border border-stone-300 rounded-xs hover:bg-stone-50 cursor-pointer"
+              title="Imprimir cartão A5 deste convidado"
+            >
+              <Printer className="w-3 h-3" />
+              Imprimir
+            </a>
           </div>
         ))}
         {filtered.length === 0 && (
