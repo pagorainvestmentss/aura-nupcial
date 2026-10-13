@@ -136,13 +136,14 @@ describe('AuthContext — registo', () => {
 });
 
 describe('AuthContext — sessão e logout', () => {
-  it('sessão existente no armazenamento é reposta no arranque', () => {
+  it('modo local: sessão existente é reposta no arranque e loading fica falso (sync)', () => {
     localStorage.setItem(
       SESSION_KEY,
       JSON.stringify({ role: 'admin', email: 'admin@auranupcial.com', displayName: 'Guardado' })
     );
 
     const { result } = renderAuth();
+    expect(result.current.loading).toBe(false);
     expect(result.current.session?.role).toBe('admin');
     expect(result.current.session?.displayName).toBe('Guardado');
   });

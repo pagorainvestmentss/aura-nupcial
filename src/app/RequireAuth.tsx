@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { UserRole } from '../types/wedding';
 import { AdminLoginPage } from '../routes/admin/AdminLoginPage';
+import { PageSkeleton } from '../components/motion/Skeleton';
 
 interface RequireAuthProps {
   role: UserRole;
@@ -15,10 +16,19 @@ interface RequireAuthProps {
  *
  *  - ADMIN   sem sessão  → mostra o login de admin ALI em /admin
  *  - CLIENTE sem sessão  → redirect para /login
+ *
+ * Em modo Supabase o restore da sessão é assíncrono: enquanto `loading` é
+ * true (arranque da página com sessão guardada), mostra o esqueleto da área
+ * em vez de redireccionar — senão o utilizador com sessão válida caía no /login
+ * no F5 (Issue #46).
  */
 export const RequireAuth: React.FC<RequireAuthProps> = ({ role, children }) => {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const location = useLocation();
+
+  if (loading) {
+    return <PageSkeleton variant={role === 'admin' ? 'admin' : 'client'} />;
+  }
 
   if (!session) {
     if (role === 'admin') {

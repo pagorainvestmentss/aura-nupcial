@@ -48,6 +48,11 @@ interface RegisterResult {
 
 interface AuthContextValue {
   session: AuthSession | null;
+  /**
+   * true enquanto o Supabase ainda não terminou o primeiro restore de sessão.
+   * Em modo local é sempre false (sessão lida de forma síncrona).
+   */
+  loading: boolean;
   login: (email: string, password?: string) => Promise<{ ok: boolean; error?: string }>;
   register: (params: {
     name: string;
@@ -148,10 +153,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Modo local: a sessão é lida de forma SÍNCRONA no arranque para que o
   // <RequireAuth> já a veja no primeiro render (evita a corrida em que o
   // <Navigate> dispara antes do estado ser preenchido). No modo Supabase a
-  // sessão chega de forma assíncrona via onAuthStateChange.
+  // sessão chega de forma assíncrona via onAuthStateChange — nesse caso o
+  // <RequireAuth> espera pelo flag `loading` antes de decidir.
   const [session, setSession] = useState<AuthSession | null>(() =>
     supabaseMode ? null : readLocalSession()
   );
+  // Em modo Supabase o restore é assíncrono — enquanto não termina, o
+  // <RequireAuth> deve esperar (loading) em vez de mandar para /login.
+  const [loading, setLoading] = useState(supabaseMode);
 
   useEffect(() => {
     if (supabaseMode) {
@@ -161,10 +170,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       supabase.auth.getSession().then(async ({ data }) => {
         if (!active) return;
         setSession(data.session ? await buildSessionFromUser(data.session.user) : null);
+        setLoading(false);
       });
 
       const { data: sub } = supabase.auth.onAuthStateChange(async (_event, sess) => {
         setSession(sess ? await buildSessionFromUser(sess.user) : null);
+        setLoading(false);
       });
 
       return () => {
@@ -334,8 +345,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 
   const value = useMemo(
-    () => ({ session, login, register, logout, requestPasswordReset, setNewPassword }),
-    [session, login, register, logout, requestPasswordReset, setNewPassword]
+    () => ({ session, loading, login, register, logout, requestPasswordReset, setNewPassword }),
+    [session, loading, login, register, logout, requestPasswordReset, setNewPassword]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
