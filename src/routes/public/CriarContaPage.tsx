@@ -10,7 +10,7 @@ import { PLAN_LABEL, planGuestLimitLabel } from '../../data/site';
 /**
  * CRIAR CONTA — passo do funil depois da escolha da ocasião.
  * Cria conta (email + WhatsApp) + evento em branco e entra no painel.
- * Pacote via ?plano= ou escolhido dentro do painel (fase seguinte).
+ * Fluxo simplificado: registo instantâneo (localStorage), sem confirmação de email.
  */
 export const CriarContaPage: React.FC = () => {
   const { register } = useAuth();
@@ -28,7 +28,6 @@ export const CriarContaPage: React.FC = () => {
   const [whatsapp, setWhatsapp] = React.useState('');
   const [error, setError] = React.useState('');
   const [busy, setBusy] = React.useState(false);
-  const [confirmEmail, setConfirmEmail] = React.useState(false);
 
   const def = occasion ? getOccasion(occasion) : null;
 
@@ -43,42 +42,11 @@ export const CriarContaPage: React.FC = () => {
       setError(result.error || 'Não foi possível criar a conta.');
       return;
     }
-    if (result.pendingConfirmation) {
-      setConfirmEmail(true);
-      return;
-    }
     navigate('/cliente', { replace: true });
   };
 
   return (
     <div className="max-w-3xl mx-auto px-5 sm:px-8 py-14 sm:py-20">
-      {confirmEmail ? (
-        <div className="max-w-lg mx-auto text-center bg-white border border-stone-200 rounded-xs p-8 shadow-xs">
-          <Sparkles className="w-8 h-8 text-[#5E6B56] mx-auto mb-4" />
-          <h2 className="font-serif text-3xl text-stone-900 mb-3">Quase lá!</h2>
-          <p className="text-sm text-stone-600 font-sans leading-relaxed">
-            Enviámos um email de confirmação para{' '}
-            <span className="font-medium text-stone-900">{email.trim()}</span>. Abra a mensagem e
-            clique no link para activar a sua conta. Depois,{' '}
-            <Link to="/login" className="text-[#5E6B56] hover:underline">
-              entre na plataforma
-            </Link>{' '}
-            com o seu email e a palavra-passe (o número de WhatsApp que indicou).
-          </p>
-          <p className="text-[11px] text-stone-500 font-sans mt-4">
-            Não encontrou o email? Verifique a pasta de spam ou{' '}
-            <button
-              type="button"
-              onClick={() => setConfirmEmail(false)}
-              className="text-[#5E6B56] hover:underline cursor-pointer"
-            >
-              tente novamente
-            </button>
-            .
-          </p>
-        </div>
-      ) : (
-      <div>
       <div className="text-center mb-10">
         <p className="text-[11px] uppercase tracking-[0.3em] text-stone-400 mb-3">
           {step === 'pick' ? 'Passo 1 de 2' : 'Passo 2 de 2'}
@@ -110,7 +78,7 @@ export const CriarContaPage: React.FC = () => {
         <div className="bg-white border border-stone-200 rounded-xs p-6 sm:p-8 shadow-xs">
           <div className="flex items-center justify-between pb-4 mb-5 border-b border-stone-200">
             <div className="flex items-center gap-2 text-sm font-sans text-stone-700">
-              {def && <def.icon className="w-4 h-4 text-[#5E6B56]" />}
+              {def && <def.icon className="w-4 h-4 text-[#5E6B56]" />}{' '}
               <span>{def?.label}</span>
             </div>
             <button
@@ -118,7 +86,7 @@ export const CriarContaPage: React.FC = () => {
               onClick={() => setStep('pick')}
               className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wider font-sans text-stone-500 hover:text-stone-900 cursor-pointer"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
+              <ArrowLeft className="w-3.5 h-3.5" />{" "}
               Mudar ocasião
             </button>
           </div>
@@ -208,13 +176,13 @@ export const CriarContaPage: React.FC = () => {
               disabled={busy}
               className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors cursor-pointer disabled:opacity-60"
             >
-              <Sparkles className="w-4 h-4" />
-              {busy ? 'A criar a conta…' : 'Criar conta e começar'}
+              <Sparkles className="w-4 h-4" />{' '}
+              {busy ? 'A criar a conta…' : 'Criar conta e começar'}{' '}
               {!busy && <ArrowRight className="w-4 h-4" />}
             </button>
 
             <p className="text-[11px] text-stone-500 font-sans text-center leading-relaxed">
-              Vamos enviar um email para confirmar a sua conta. Já tem conta?{' '}
+              Já tem conta?{' '}
               <Link to="/login" className="text-[#5E6B56] hover:underline">
                 Entrar
               </Link>
@@ -222,8 +190,6 @@ export const CriarContaPage: React.FC = () => {
           </form>
         </div>
       )}
-      </div>
-      )}
     </div>
   );
-};
+};
