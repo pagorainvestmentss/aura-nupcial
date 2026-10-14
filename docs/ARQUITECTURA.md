@@ -256,6 +256,10 @@ Serviços: `src/services/weddingStorage.ts` (CRUD + `recordAccess` + `validateQr
 | Admin | `admin@auranupcial.com` / `admin123` |
 | Casais (×3) | `mariana.pedro@`, `sofia.andre@`, `joana.miguel@` `…@auranupcial.com` / `demo123` |
 | Convite demo | `/convite/mariana-pedro/8Fk92KsP` |
+| Galeria `/exemplos` | Cartões clicáveis → `/convite/mariana-pedro/8Fk92KsP`, `/convite/sofia-andre/marta-4Rc8Bn`, `/convite/joana-miguel/domingos-3Vn9Pa` |
+
+> Em produção os mesmos 3 convites demo (e os mesmos tokens) são criados pela migração
+> `20261014091000_seed_demo_invitations.sql` — idempotente, corre depois da limpeza da Fase 2 (§9.6).
 
 ---
 

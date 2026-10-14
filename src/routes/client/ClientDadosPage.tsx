@@ -152,10 +152,20 @@ const [isProcessing, setIsProcessing] = React.useState(false);
     try {
       // Eventos antigos podem ter monograma vazio: ao gravar, preenche com as
       // iniciais dos nomes para o selo do convite nunca ficar em branco.
-      const paraGuardar: WeddingEvent =
+      const base: WeddingEvent =
         !form.monogram.trim() && !monoTouched.current
           ? { ...form, monogram: suggestMonogram(form.brideName, form.groomName) }
           : form;
+      // Idade do aniversário: só inteiros entre 1 e 130 seguem para a base.
+      const paraGuardar: WeddingEvent =
+        base.age !== undefined
+          ? {
+              ...base,
+              age: Number.isFinite(base.age)
+                ? Math.min(130, Math.max(1, Math.round(base.age)))
+                : undefined
+            }
+          : base;
       if (paraGuardar !== form) setForm(paraGuardar);
       const guardado = await getRepo().saveEvent(paraGuardar);
       if (!guardado) {
@@ -265,6 +275,27 @@ const [isProcessing, setIsProcessing] = React.useState(false);
                 className={field}
               />
             </div>
+            {form.occasion === 'aniversario' && (
+              <div>
+                <label className={labelCls}>{L.age}</label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={130}
+                  value={form.age ?? ''}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    patch({ age: raw === '' ? undefined : Number(raw) });
+                  }}
+                  placeholder="Ex.: 30"
+                  className={field}
+                />
+                <p className={hintCls}>
+                  Aparece no topo do convite (ex.: 30 ANOS) — deixe vazio para não mostrar.
+                </p>
+              </div>
+            )}
             <div>
               <label className={labelCls}>{L.monogram}</label>
               <input

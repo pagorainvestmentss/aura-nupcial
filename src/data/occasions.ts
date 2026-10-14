@@ -29,6 +29,8 @@ export interface OccasionDef {
     person2: string;
     conjunction: string;
     monogram: string;
+    /** "quantos anos" — só a ocasião aniversário usa (ex.: 30). */
+    age: string;
     date: string;
     location: string;
     verseSection: string;
@@ -92,6 +94,7 @@ export const OCCASIONS: Record<OccasionId, OccasionDef> = {
       person2: 'Nome do noivo',
       conjunction: 'Junção',
       monogram: 'Monograma',
+      age: 'Quantos anos',
       date: 'Data',
       location: 'Localização',
       verseSection: 'Versículo e convite',
@@ -149,6 +152,7 @@ export const OCCASIONS: Record<OccasionId, OccasionDef> = {
       person2: 'Nome do noivo',
       conjunction: 'Junção',
       monogram: 'Monograma',
+      age: 'Quantos anos',
       date: 'Data',
       location: 'Localização',
       verseSection: 'Versículo e convite',
@@ -206,6 +210,7 @@ export const OCCASIONS: Record<OccasionId, OccasionDef> = {
       person2: 'Nome de quem acompanha (opcional)',
       conjunction: 'Junção',
       monogram: 'Monograma',
+      age: 'Quantos anos',
       date: 'Data',
       location: 'Localização',
       verseSection: 'Mensagem e convite',
@@ -263,6 +268,7 @@ export const OCCASIONS: Record<OccasionId, OccasionDef> = {
       person2: 'Nome do anfitrião 2 (opcional)',
       conjunction: 'Junção',
       monogram: 'Monograma',
+      age: 'Quantos anos',
       date: 'Data',
       location: 'Localização',
       verseSection: 'Mensagem e convite',

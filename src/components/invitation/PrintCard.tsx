@@ -40,6 +40,12 @@ export const PrintCard: React.FC<PrintCardProps> = ({ event, guest }) => {
 
   const names = eventNames(event) || fallbackNames(event.occasion);
 
+  // Ocasião aniversário: a idade acompanha o nome também no cartão impresso.
+  const idade =
+    event.occasion === 'aniversario' && typeof event.age === 'number' && event.age > 0
+      ? Math.round(event.age)
+      : null;
+
   // Saudação personalizada — mesma lógica do convite digital.
   const getGreeting = () => {
     if (guest.customSalutation) return guest.customSalutation;
@@ -175,6 +181,15 @@ export const PrintCard: React.FC<PrintCardProps> = ({ event, guest }) => {
         </div>
 
         <BotanicalDivider color={palette.accent} className="my-2" />
+
+        {idade && (
+          <p
+            className="font-serif text-[13px] tracking-[0.2em] uppercase -mt-1 mb-1"
+            style={{ color: palette.accent }}
+          >
+            {idade} anos
+          </p>
+        )}
 
         {/* Data e locais */}
         {dateLine && (

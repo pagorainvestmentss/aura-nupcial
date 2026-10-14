@@ -2,24 +2,35 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
+/**
+ * Exemplos reais — cada cartão abre o convite do convidado de demonstração
+ * (slug + token do seed, idênticos em dev e em produção; ver migração
+ * `…_seed_demo_invitations.sql`).
+ */
 const EXAMPLES = [
   {
     names: 'Mariana & Pedro',
     date: '15 Janeiro 2027 · Luanda',
     palette: 'Botânico Sálvia',
-    colors: ['#D8DFD5', '#5E6B56', '#FAF7F2']
+    colors: ['#D8DFD5', '#5E6B56', '#FAF7F2'],
+    slug: 'mariana-pedro',
+    token: '8Fk92KsP'
   },
   {
     names: 'Sofia & André',
     date: '22 Maio 2027 · Lisboa',
     palette: 'Elegância Terracota',
-    colors: ['#E8D5C4', '#A9714B', '#FBF6F0']
+    colors: ['#E8D5C4', '#A9714B', '#FBF6F0'],
+    slug: 'sofia-andre',
+    token: 'marta-4Rc8Bn'
   },
   {
     names: 'Joana & Miguel',
     date: '12 Dezembro 2026 · Benguela',
     palette: 'Clássico Dourado',
-    colors: ['#EFE4CC', '#B8975A', '#FAF7F2']
+    colors: ['#EFE4CC', '#B8975A', '#FAF7F2'],
+    slug: 'joana-miguel',
+    token: 'domingos-3Vn9Pa'
   }
 ];
 
@@ -37,9 +48,11 @@ export const ExemplosPage: React.FC = () => {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {EXAMPLES.map((ex) => (
-          <div
+          <Link
             key={ex.names}
-            className="bg-white border border-stone-200 rounded-xs overflow-hidden shadow-xs flex flex-col"
+            to={`/convite/${ex.slug}/${ex.token}`}
+            aria-label={`Abrir o convite de exemplo de ${ex.names}`}
+            className="group bg-white border border-stone-200 rounded-xs overflow-hidden shadow-xs flex flex-col transition-colors hover:border-[#5E6B56] hover:shadow-sm focus:outline-none focus:border-[#5E6B56]"
           >
             <div
               className="h-40 flex items-center justify-center"
@@ -67,8 +80,12 @@ export const ExemplosPage: React.FC = () => {
                   />
                 ))}
               </div>
+              <span className="mt-5 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] font-semibold text-[#5E6B56] font-sans">
+                Ver convite
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              </span>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

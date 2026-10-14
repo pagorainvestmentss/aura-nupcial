@@ -90,6 +90,12 @@ export interface WeddingEvent {
   groomName: string;
   conjunction: string; // '&' or 'e'
   monogram: string; // 'M & P' or 'MP'
+  /**
+   * Ocasião "aniversário": quantos anos o aniversariante faz (ex.: 30).
+   * Mostrado no topo do convite ("30 ANOS") e no cartão impresso.
+   * Vazio/null nas outras ocasiões.
+   */
+  age?: number;
   dateDisplay: string; // e.g., '15 Janeiro 2027'
   dateIso: string; // '2027-01-15'
   locationDisplay: string; // 'LUANDA — ANGOLA'

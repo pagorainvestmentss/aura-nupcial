@@ -136,3 +136,17 @@ describe('PrintCard — QR', () => {
     expect(screen.getByText('Abra o convite digital')).toBeInTheDocument();
   });
 });
+
+describe('PrintCard — idade do aniversário', () => {
+  it('aniversário com idade → "30 anos" no cartão', () => {
+    render(<PrintCard event={eventoCom({ occasion: 'aniversario', age: 30 })} guest={convidado()} />);
+
+    expect(screen.getByText('30 anos')).toBeInTheDocument();
+  });
+
+  it('aniversário sem idade → não mostra a idade', () => {
+    render(<PrintCard event={eventoCom({ occasion: 'aniversario' })} guest={convidado()} />);
+
+    expect(screen.queryByText(/\d+ anos/)).not.toBeInTheDocument();
+  });
+});

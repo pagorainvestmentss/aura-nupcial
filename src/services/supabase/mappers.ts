@@ -74,6 +74,7 @@ export interface EventRow {
   groom_name: string;
   conjunction: string;
   monogram: string;
+  age: number | null;
   parents_honoring: string | null;
 }
 
@@ -166,6 +167,7 @@ export function rowToEvent(r: EventRow): WeddingEvent {
     groomName: asText(r.groom_name),
     conjunction: asText(r.conjunction, '&'),
     monogram: asText(r.monogram),
+    age: r.age ?? undefined,
     dateDisplay: asText(r.date_display),
     dateIso: asText(r.date_iso),
     locationDisplay: asText(r.location_display),
@@ -217,6 +219,7 @@ export function eventToRow(e: WeddingEvent): Partial<EventRow> {
     groom_name: e.groomName,
     conjunction: e.conjunction,
     monogram: e.monogram,
+    age: e.age ?? null,
     date_display: e.dateDisplay,
     date_iso: e.dateIso || null,
     location_display: e.locationDisplay,
