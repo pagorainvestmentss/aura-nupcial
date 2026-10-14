@@ -24,6 +24,12 @@ export const SaveTheDateSection: React.FC<SaveTheDateSectionProps> = ({
   const year = dateParts[2] || isoParts[0] || '';
   const names = eventNames(event);
 
+  // Ocasião aniversário: "30 ANOS" em destaque no topo do convite.
+  const idade =
+    event.occasion === 'aniversario' && typeof event.age === 'number' && event.age > 0
+      ? Math.round(event.age)
+      : null;
+
   return (
     <section
       className="relative w-full min-h-[90vh] flex flex-col items-center justify-center px-6 py-16 text-center overflow-hidden"
@@ -76,11 +82,29 @@ export const SaveTheDateSection: React.FC<SaveTheDateSectionProps> = ({
         </p>
 
         <h1
-          className="font-serif text-base sm:text-lg tracking-[0.25em] uppercase font-light mb-8"
+          className={`font-serif text-base sm:text-lg tracking-[0.25em] uppercase font-light ${
+            idade ? 'mb-3' : 'mb-8'
+          }`}
           style={{ color: palette.primaryText }}
         >
           {occasion.hero.title}
         </h1>
+
+        {/* Idade do aniversariante (só ocasião aniversário, se preenchida) */}
+        {idade && (
+          <p
+            className="font-serif text-5xl sm:text-6xl font-light tracking-wide mb-8 leading-none"
+            style={{ color: palette.accent }}
+          >
+            {idade}
+            <span
+              className="font-sans text-sm sm:text-base tracking-[0.3em] uppercase align-middle ml-3"
+              style={{ color: palette.mutedText }}
+            >
+              anos
+            </span>
+          </p>
+        )}
 
         <BotanicalDivider color={palette.accent} className="mb-8" />
 
