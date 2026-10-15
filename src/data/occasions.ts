@@ -78,7 +78,7 @@ export const OCCASIONS: Record<OccasionId, OccasionDef> = {
     id: 'casamento',
     label: 'Casamento',
     tagline: 'O "sim" para a vida',
-    description: 'Um convite digital à altura do grande dia, com RSVP e check-in por QR.',
+    description: 'Um convite à altura do grande dia — com confirmações em tempo real e check-in por QR à entrada.',
     icon: Heart,
     hero: {
       kicker: 'SAVE THE DATE',
@@ -136,7 +136,7 @@ export const OCCASIONS: Record<OccasionId, OccasionDef> = {
     id: 'noivado',
     label: 'Noivado',
     tagline: 'O começo do "sim"',
-    description: 'Celebre a sua decisão com um convite elegante para família e amigos.',
+    description: 'Celebre a sua decisão com um convite elegante — e saiba já quem estará lá.',
     icon: Gem,
     hero: {
       kicker: 'SAVE THE DATE',
@@ -194,7 +194,7 @@ export const OCCASIONS: Record<OccasionId, OccasionDef> = {
     id: 'aniversario',
     label: 'Aniversário',
     tagline: 'Mais um ano a celebrar',
-    description: 'Reúna quem ama num convite digital com confirmação de presença.',
+    description: 'Reúna quem ama num convite à altura — e veja as confirmações chegarem em tempo real.',
     icon: Cake,
     hero: {
       kicker: 'FAÇA-SE PRESENTE',
@@ -252,7 +252,7 @@ export const OCCASIONS: Record<OccasionId, OccasionDef> = {
     id: 'outra',
     label: 'Outra celebração',
     tagline: 'Batizado, jantar, empresa…',
-    description: 'Qualquer merece um convite digital caprichado, com RSVP à mão.',
+    description: 'Qualquer celebração merece um convite caprichado, com as confirmações sempre à mão.',
     icon: Sparkles,
     hero: {
       kicker: 'FAÇA-SE PRESENTE',

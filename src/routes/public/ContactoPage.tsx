@@ -18,7 +18,8 @@ export const ContactoPage: React.FC = () => {
           <h1 className="font-serif text-4xl text-stone-900">Vamos falar do seu convite</h1>
           <p className="mt-4 text-sm text-stone-600 font-sans leading-relaxed">
             Dúvidas sobre pacotes, ocasiões ou pagamentos? Fale connosco pelo
-            WhatsApp — respondemos em horas úteis, normalmente em menos de 24 horas.
+            WhatsApp — sem compromisso. Respondemos em horas úteis, normalmente
+            em menos de 24 horas.
           </p>
 
           <a
@@ -128,6 +129,9 @@ export const ContactoPage: React.FC = () => {
               >
                 Enviar mensagem
               </button>
+              <p className="text-center text-[11px] text-stone-500 font-sans">
+                Sem compromisso — respondemos normalmente em menos de 24 horas.
+              </p>
             </form>
           )}
         </div>

@@ -8,12 +8,12 @@ const STEPS = [
   {
     n: '01',
     title: 'Crie a sua conta',
-    text: 'Escolha a ocasião — casamento, noivado, aniversário ou outra celebração — e registe-se com email e WhatsApp. A plataforma prepara o seu convite na hora.'
+    text: 'Escolha a ocasião — casamento, noivado, aniversário ou outra celebração — e registe-se com email e WhatsApp. A plataforma prepara o seu convite na hora, sem instalações.'
   },
   {
     n: '02',
     title: 'Escolha o pacote',
-    text: 'Starter (até 30 convidados), Pro (até 100, com QR Code e música) ou Premium (tudo ilimitado). O pagamento é único e confirmado pela nossa equipa.'
+    text: 'Starter (até 30 convidados), Pro (até 100, com QR Code e música) ou Premium (tudo ilimitado). Pode montar tudo primeiro sem custos — o convite só publica depois de o pagamento único ser confirmado pela nossa equipa.'
   },
   {
     n: '03',
@@ -33,7 +33,7 @@ const STEPS = [
   {
     n: '06',
     title: 'RSVP e check-in',
-    text: 'As confirmações chegam em tempo real para o seu painel. No dia do evento, cada convidado é validado por QR Code à entrada.'
+    text: 'As confirmações chegam em tempo real para o seu painel — sem perseguir ninguém no WhatsApp. No dia, cada convidado entra com QR Code, sem listas de papel.'
   }
 ];
 
@@ -77,7 +77,7 @@ export const ComoFuncionaPage: React.FC = () => {
               to="/criar"
               className="press px-6 py-3 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors"
             >
-              Criar convite
+              Criar o meu convite
             </Link>
             <Link
               to="/exemplos"
@@ -92,6 +92,9 @@ export const ComoFuncionaPage: React.FC = () => {
               Ver pacotes
             </Link>
           </div>
+          <p className="mt-4 text-xs text-stone-500 font-sans">
+            Monte primeiro — só paga quando publicar.
+          </p>
         </div>
       </Reveal>
     </div>
