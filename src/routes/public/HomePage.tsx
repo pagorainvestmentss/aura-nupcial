@@ -11,17 +11,17 @@ import { DivisoriaBotanica } from '../../components/motion/DivisoriaBotanica';
 import { EASE_OUT, heroChild, heroParent, quoteWord, slideChild } from '../../components/motion/variants';
 
 const STEPS = [
-  { n: '01', title: 'Crie a sua conta', text: 'Email e WhatsApp, escolha da ocasião e do pacote — a plataforma prepara o seu convite na hora.' },
+  { n: '01', title: 'Crie a sua conta', text: 'Escolha a ocasião, registe-se com email e WhatsApp — a plataforma prepara o seu convite na hora, sem instalações.' },
   { n: '02', title: 'Você preenche', text: 'Nomes, data, locais, versículo, cronograma e mensagem final — tudo com exemplos à vista num painel simples.' },
   { n: '03', title: 'Convidados recebem o link', text: 'Cada convidado recebe um convite individual e intransmissível, com o seu nome na abertura.' },
-  { n: '04', title: 'Confirmações em tempo real', text: 'RSVP reunido num só lugar, com QR Code de check-in no dia do evento.' }
+  { n: '04', title: 'Confirmações em tempo real', text: 'Cada resposta reunida num só lugar — e no dia, check-in por QR à entrada, sem listas de papel.' }
 ];
 
 const FEATURES = [
-  'Convite individual com o nome de cada convidado',
-  'Envelope digital com abertura cinematográfica',
-  'Confirmações de presença em tempo real',
-  'QR Code de validação à entrada',
+  'Cada convidado vê o próprio nome ao abrir o link',
+  'Abertura cinematográfica, em papel que parece real',
+  'Sabe quem vem sem precisar de perguntar no grupo',
+  'Check-in por QR à entrada: quem chegou e quem falta',
   'Galeria, cronograma e manual do convidado',
   'Envio direto por WhatsApp'
 ];
@@ -69,16 +69,16 @@ export const HomePage: React.FC = () => {
               variants={heroChild}
               className="mt-6 text-sm sm:text-base text-stone-600 leading-relaxed max-w-lg font-sans"
             >
-              Casamento, noivado, aniversário ou outra data especial — uma experiência
-              editorial inspirada na papelaria de luxo, com RSVP em tempo real e
-              check-in por QR Code.
+              Casamento, noivado ou aniversário — um convite editorial à altura da
+              papelaria de luxo. Cada convidado recebe o seu nome no link, confirma a
+              presença num toque — e você sabe, em tempo real, quem vai estar lá.
             </motion.p>
             <motion.div variants={heroChild} className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/criar"
                 className="press group inline-flex items-center gap-2 px-7 py-3.5 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors"
               >
-                Criar convite
+                Criar o meu convite
                 <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
               </Link>
               <Link
@@ -88,7 +88,10 @@ export const HomePage: React.FC = () => {
                 Ver exemplos
               </Link>
             </motion.div>
-            <motion.ul variants={heroChild} className="mt-8 grid sm:grid-cols-2 gap-x-6 gap-y-2">
+            <motion.p variants={heroChild} className="mt-4 text-[11px] text-stone-500 font-sans">
+              Monte primeiro — só paga quando publicar.
+            </motion.p>
+            <motion.ul variants={heroChild} className="mt-6 grid sm:grid-cols-2 gap-x-6 gap-y-2">
               {FEATURES.slice(0, 4).map((f) => (
                 <li key={f} className="flex items-start gap-2 text-xs text-stone-600 font-sans">
                   <Check className="w-3.5 h-3.5 text-[#5E6B56] mt-0.5 shrink-0" />
@@ -142,7 +145,7 @@ export const HomePage: React.FC = () => {
             O que está a preparar?
           </h2>
           <p className="mt-4 text-sm text-stone-600 font-sans">
-            Escolha a ocasião — adaptamos os campos e o convite em função dela.
+            Escolha a ocasião — adaptamos os campos por si. O primeiro passo leva 10 segundos e não o obriga a nada.
           </p>
         </div>
         <Reveal stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -167,7 +170,7 @@ export const HomePage: React.FC = () => {
                       {o.description}
                     </p>
                     <span className="inline-flex items-center gap-1.5 mt-4 text-[11px] uppercase tracking-[0.2em] font-semibold text-stone-800 group-hover:text-[#5E6B56]">
-                      Começar
+                      Começar agora
                       <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" />
                     </span>
                   </Link>
@@ -206,7 +209,7 @@ export const HomePage: React.FC = () => {
             to="/como-funciona"
             className="group inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.2em] font-semibold text-[#5E6B56] hover:underline"
           >
-            Saber mais
+            Ver todos os 6 passos
             <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
           </Link>
         </div>
@@ -250,12 +253,15 @@ export const HomePage: React.FC = () => {
           <h2 className="font-serif text-3xl sm:text-4xl text-stone-900">
             Pronto para surpreender os seus convidados?
           </h2>
+          <p className="mt-4 text-sm text-stone-600 font-sans">
+            Comece agora — monte o convite à sua vontade e publique quando estiver perfeito.
+          </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link
               to="/criar"
               className="press px-7 py-3.5 text-xs uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] hover:bg-[#4E5B46] rounded-xs transition-colors"
             >
-              Criar convite
+              Criar o meu convite
             </Link>
             <Link
               to="/pacotes"

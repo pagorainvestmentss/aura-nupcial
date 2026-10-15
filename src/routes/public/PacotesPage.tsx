@@ -17,7 +17,7 @@ const PLANS = [
       'Convite digital personalizado',
       'Até 30 convidados',
       'Links individuais intransmissíveis',
-      'RSVP em tempo real',
+      'Confirmações de presença em tempo real',
       'Cronograma, versículo e galeria',
       'Envio por WhatsApp',
       'Suporte por email'
@@ -52,7 +52,7 @@ const PLANS = [
       'Galeria de fotos ilimitada',
       'Até 5 revisões de design',
       'Prioridade absoluta no suporte',
-      'Análises avançadas (who confirmed, check-in times)',
+      'Análises avançadas: quem confirmou e a que horas chegou',
       'Domínio personalizado para o convite'
     ]
   }
@@ -65,8 +65,8 @@ export const PacotesPage: React.FC = () => {
         <p className="text-[11px] uppercase tracking-[0.3em] text-stone-400 mb-3">Investimento</p>
         <h1 className="font-serif text-4xl text-stone-900">Pacotes</h1>
         <p className="mt-4 text-sm text-stone-600 font-sans leading-relaxed">
-          Preço fixo, sem subscrições. Escolha o pacote, crie a conta e comece
-          já a preencher o seu convite.
+          Preço fixo, pagamento único — sem subscrições. Crie a conta e comece já a
+          preencher: só paga quando o convite estiver pronto a publicar.
         </p>
       </div>
 
@@ -95,7 +95,7 @@ export const PacotesPage: React.FC = () => {
                 }}
                 className="absolute -top-3 left-1/2 text-[10px] uppercase tracking-[0.2em] font-semibold text-white bg-[#5E6B56] px-3 py-1 rounded-full"
               >
-                Mais escolhido
+                Recomendado
               </motion.span>
             )}
             <h2 className="font-serif text-2xl text-stone-900">{p.name}</h2>
@@ -130,7 +130,10 @@ export const PacotesPage: React.FC = () => {
         ))}
       </Reveal>
 
-      <p className="text-center text-xs text-stone-500 font-sans mt-8">
+      <p className="text-center text-xs text-stone-700 font-sans mt-8">
+        Monte primeiro — só paga quando publicar.
+      </p>
+      <p className="text-center text-xs text-stone-500 font-sans mt-4">
         Precisa de algo à medida?{' '}
         <Link to="/contacto" className="text-[#5E6B56] hover:underline">
           Fale connosco

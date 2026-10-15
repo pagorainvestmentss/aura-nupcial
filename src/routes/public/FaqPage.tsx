@@ -7,7 +7,11 @@ import { DURATION, EASE_OUT } from '../../components/motion/variants';
 const FAQS = [
   {
     q: 'O que é exactamente o Aura Nupcial?',
-    a: 'Uma plataforma de convites digitais de autor. Você cria a conta, escolhe a ocasião e preenche o convite no seu painel — inspirado em papelaria editorial de luxo, com RSVP em tempo real e check-in por QR Code.'
+    a: 'Uma plataforma de convites digitais de autor. Você cria a conta, escolhe a ocasião e preenche o convite no seu painel — inspirado em papelaria editorial de luxo, com confirmações de presença em tempo real e check-in por QR Code.'
+  },
+  {
+    q: 'Preciso de pagar para criar a conta?',
+    a: 'Não. Cria a conta, escolhe a ocasião e monta o convite inteiro sem custos — só paga quando decidir publicar, com pagamento único confirmado pela nossa equipa.'
   },
   {
     q: 'Que ocasiões posso criar?',
@@ -35,7 +39,7 @@ const FAQS = [
   },
   {
     q: 'Quanto tempo demora a ficar pronto?',
-    a: 'A conta e a estrutura do convite ficam prontos em segundos. Depois é só preencher os campos no seu ritmo — e publicar assim que o pagamento for confirmado pela nossa equipa (normalmente em poucas horas).'
+    a: 'A conta e a estrutura do convite ficam prontos em segundos. Pode preencher tudo no seu ritmo e sem pagar — publica assim que o pagamento for confirmado pela nossa equipa (normalmente em poucas horas).'
   },
   {
     q: 'O convite funciona em telemóveis?',
@@ -106,7 +110,7 @@ export const FaqPage: React.FC = () => {
 
       <div className="text-center mt-10">
         <p className="text-sm text-stone-600 font-sans">
-          Não encontrou a sua resposta?
+          Não encontrou a sua resposta? A nossa equipa responde normalmente em menos de 24 horas.
         </p>
         <Link
           to="/contacto"

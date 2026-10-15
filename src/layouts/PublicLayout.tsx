@@ -167,7 +167,8 @@ export const PublicLayout: React.FC = () => {
             </p>
             <p className="leading-relaxed">
               Convites digitais de autor para casamento, noivado, aniversário e
-              celebrações. RSVP em tempo real e check-in por QR Code.
+              celebrações — cada convidado com o seu nome, confirmações em tempo
+              real e check-in por QR Code.
             </p>
           </div>
           <div className="flex flex-col gap-1.5">
